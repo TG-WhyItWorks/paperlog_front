@@ -9,28 +9,29 @@ class HeaderWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFE5E8EA))),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Theme.of(context).dividerColor),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          /// 로고& 사이드바 토글
+          /// 로고 & 사이드바 토글
           GestureDetector(
             onTap: viewModel.toggleSidebar,
             child: Row(
               children: [
                 Icon(
                   viewModel.isSidebarOpen ? Icons.menu_open : Icons.menu,
-                  color: Colors.white,
+                  color: Theme.of(context).iconTheme.color,
                 ),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   'PaperLog',
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.displayLarge!.copyWith(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
                   ),
                 ),
               ],
@@ -72,12 +73,15 @@ class HeaderWidget extends StatelessWidget {
                 ),
                 hintText: 'Search',
                 filled: true,
-                fillColor: const Color(0xFF2E3A4D),
+                fillColor: Theme.of(context).colorScheme.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
                 ),
-                prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                ),
               ),
               style: const TextStyle(color: Colors.white),
               onSubmitted: (q) {
@@ -89,8 +93,13 @@ class HeaderWidget extends StatelessWidget {
 
           /// 알림 아이콘
           IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {},
+            icon: Icon(
+              Icons.notifications,
+              color: Theme.of(context).iconTheme.color,
+            ),
+            onPressed: () {
+              //TODO: 알림 팝업 구현
+            },
           ),
           const SizedBox(width: 16),
 
@@ -131,7 +140,9 @@ class _NavItem extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          color: selected ? Colors.white : Colors.grey,
+          color: selected
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).textTheme.bodyLarge?.color,
           fontSize: 16,
           fontWeight: FontWeight.w500,
         ),

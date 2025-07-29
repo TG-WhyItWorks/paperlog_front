@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'features/dashboard/view/main_screen.dart';
+import 'shared/theme/app_theme.dart';
 
 void main() {
   runApp(const PaperLogApp());
@@ -13,9 +14,8 @@ class PaperLogApp extends StatelessWidget {
     return MaterialApp(
       title: 'PaperLog',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color.fromARGB(255, 18, 32, 47),
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       home: const MainScreen(),
     );
   }

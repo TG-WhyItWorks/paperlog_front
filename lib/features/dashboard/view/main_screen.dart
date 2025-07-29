@@ -7,7 +7,7 @@ import '../widgets/recommend_paper_card.dart';
 import '../widgets/folder_list_widget.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({Key? key}) : super(key:key);
+  const MainScreen({Key? key}) : super(key: key);
 
   @override
   _MainScreenState createState() => _MainScreenState();
@@ -26,7 +26,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final vm = MainViewModel();
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 18, 32, 47),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Row(
         children: [
           SidebarWidget(viewModel: vm),
@@ -35,15 +35,19 @@ class _MainScreenState extends State<MainScreen> {
               children: [
                 HeaderWidget(viewModel: vm),
                 SearchbarWidget(viewModel: vm),
-                Expanded(child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: vm.recommendPapers
-                    .map((paper) => RecommendPaperCard(paper:paper))
-                    .toList(),
-            ))
-          ],
-        ),)
-      ],),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: vm.recommendPapers
+                        .map((paper) => RecommendPaperCard(paper: paper))
+                        .toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
-  } 
+  }
 }
