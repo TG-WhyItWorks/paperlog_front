@@ -23,7 +23,7 @@ class HeaderWidget extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          /// 로고 & 사이드바 토글
+          /// 사이드바 토글
           GestureDetector(
             onTap: viewModel.toggleSidebar,
             child: Row(
@@ -32,7 +32,17 @@ class HeaderWidget extends StatelessWidget {
                   viewModel.isSidebarOpen ? Icons.menu_open : Icons.menu,
                   color: Theme.of(context).iconTheme.color,
                 ),
-                const SizedBox(width: 8),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 20),
+
+          /// 로고 및 Home 버튼
+          GestureDetector(
+            onTap: () => viewModel.navigationTo(PageType.home),
+            child: Row(
+              children: [
                 Text(
                   'PaperLog',
                   style: Theme.of(context).textTheme.displayLarge!.copyWith(
@@ -45,11 +55,6 @@ class HeaderWidget extends StatelessWidget {
           ),
           const SizedBox(width: 20),
 
-          _NavItem(
-            label: 'Home',
-            selected: viewModel.currentPage == PageType.home,
-            onTap: () => viewModel.navigationTo(PageType.home),
-          ),
           _NavItem(
             label: 'Explore',
             selected: viewModel.currentPage == PageType.explore,
