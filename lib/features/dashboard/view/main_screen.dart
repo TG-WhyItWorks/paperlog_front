@@ -34,7 +34,6 @@ class _MainScreenState extends State<MainScreen> {
             child: Column(
               children: [
                 HeaderWidget(viewModel: vm),
-                SearchbarWidget(viewModel: vm),
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.all(16),

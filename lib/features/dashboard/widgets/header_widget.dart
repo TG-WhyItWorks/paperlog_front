@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../viewmodel/dashboard_viewmodel.dart';
+import 'package:provider/provider.dart';
+import '../../../shared/theme/theme_provider.dart';
 
 class HeaderWidget extends StatelessWidget {
   final MainViewModel viewModel;
@@ -7,6 +9,7 @@ class HeaderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLight = context.watch<ThemeProvider>().mode == ThemeMode.light;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
       decoration: BoxDecoration(
@@ -101,6 +104,17 @@ class HeaderWidget extends StatelessWidget {
               //TODO: 알림 팝업 구현
             },
           ),
+          const SizedBox(width: 16),
+
+          /// 테마 토글 아이콘
+          IconButton(
+            icon: Icon(
+              isLight ? Icons.light_mode : Icons.dark_mode,
+              color: Theme.of(context).iconTheme.color,
+            ),
+            onPressed: () => context.read<ThemeProvider>().toggle(),
+          ),
+
           const SizedBox(width: 16),
 
           /// 프로필 아바타
