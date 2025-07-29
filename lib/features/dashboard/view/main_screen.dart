@@ -20,26 +20,35 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     vm = MainViewModel();
+    vm.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    vm.removeListener(() {});
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final vm = MainViewModel();
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Row(
+      body: Column(
         children: [
-          SidebarWidget(viewModel: vm),
+          HeaderWidget(viewModel: vm),
           Expanded(
-            child: Column(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                HeaderWidget(viewModel: vm),
+                if (vm.isSidebarOpen) SidebarWidget(viewModel: vm),
                 Expanded(
-                  child: ListView(
+                  child: Padding(
                     padding: const EdgeInsets.all(16),
-                    children: vm.recommendPapers
-                        .map((paper) => RecommendPaperCard(paper: paper))
-                        .toList(),
+                    child: ListView(
+                      children: vm.recommendPapers
+                          .map((paper) => RecommendPaperCard(paper: paper))
+                          .toList(),
+                    ),
                   ),
                 ),
               ],
