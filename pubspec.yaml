@@ -54,6 +54,8 @@ dev_dependencies:
 flutter:
   assets:
     - assets/images/default_avatar.png
+    - assets/images/default_paper_image.png
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

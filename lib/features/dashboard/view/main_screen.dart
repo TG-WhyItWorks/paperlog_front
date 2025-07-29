@@ -36,6 +36,7 @@ class _MainScreenState extends State<MainScreen> {
       body: Column(
         children: [
           HeaderWidget(viewModel: vm),
+          const SizedBox(height: 24),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -43,11 +44,30 @@ class _MainScreenState extends State<MainScreen> {
                 if (vm.isSidebarOpen) SidebarWidget(viewModel: vm),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: ListView(
-                      children: vm.recommendPapers
-                          .map((paper) => RecommendPaperCard(paper: paper))
-                          .toList(),
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Recommended Papers',
+                          style: Theme.of(context).textTheme.displayLarge
+                              ?.copyWith(
+                                fontSize: 36,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: ListView(
+                            padding: EdgeInsets.zero,
+                            children: vm.recommendPapers
+                                .map(
+                                  (paper) => RecommendPaperCard(paper: paper),
+                                )
+                                .toList(),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
