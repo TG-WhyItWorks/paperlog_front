@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../viewmodel/dashboard_viewmodel.dart';
 import 'package:provider/provider.dart';
 import '../../../shared/theme/theme_provider.dart';
+import 'notification_icon.dart';
 
 class HeaderWidget extends StatelessWidget {
   final MainViewModel viewModel;
@@ -97,13 +98,12 @@ class HeaderWidget extends StatelessWidget {
           /// 알림 아이콘
           IconButton(
             icon: Icon(
-              Icons.notifications,
+              isLight ? Icons.dark_mode : Icons.light_mode,
               color: Theme.of(context).iconTheme.color,
             ),
-            onPressed: () {
-              //TODO: 알림 팝업 구현
-            },
+            onPressed: () => context.read<ThemeProvider>().toggle(),
           ),
+          const NotificationIcon(),
           const SizedBox(width: 16),
 
           /// 테마 토글 아이콘
