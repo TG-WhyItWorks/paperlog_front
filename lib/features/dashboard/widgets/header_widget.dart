@@ -102,7 +102,7 @@ class HeaderWidget extends StatelessWidget {
           ),
           const SizedBox(width: 16),
 
-          /// 알림 아이콘
+          /// 알림 아이콘 & 테마 토글
           IconButton(
             icon: Icon(
               isLight ? Icons.dark_mode : Icons.light_mode,
@@ -111,17 +111,6 @@ class HeaderWidget extends StatelessWidget {
             onPressed: () => context.read<ThemeProvider>().toggle(),
           ),
           const NotificationIcon(),
-          const SizedBox(width: 16),
-
-          /// 테마 토글 아이콘
-          IconButton(
-            icon: Icon(
-              isLight ? Icons.light_mode : Icons.dark_mode,
-              color: Theme.of(context).iconTheme.color,
-            ),
-            onPressed: () => context.read<ThemeProvider>().toggle(),
-          ),
-
           const SizedBox(width: 16),
 
           /// 프로필 아바타
