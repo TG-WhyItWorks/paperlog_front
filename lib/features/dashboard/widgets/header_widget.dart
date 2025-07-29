@@ -3,6 +3,8 @@ import '../viewmodel/dashboard_viewmodel.dart';
 import 'package:provider/provider.dart';
 import '../../../shared/theme/theme_provider.dart';
 import 'notification_icon.dart';
+import '../../profile/viewmodel/auth_viewmodel.dart';
+import '../../profile/widgets/avatar_menu.dart';
 
 class HeaderWidget extends StatelessWidget {
   final MainViewModel viewModel;
@@ -118,17 +120,7 @@ class HeaderWidget extends StatelessWidget {
           const SizedBox(width: 16),
 
           /// 프로필 아바타
-          GestureDetector(
-            onTap: () {
-              //TODO: 프로필 페이지로 이동
-            },
-            child: CircleAvatar(
-              radius: 20,
-              backgroundImage: NetworkImage(
-                'https://example.com/profile.jpg', // 프로필 이미지 URL
-              ),
-            ),
-          ),
+          const AvatarMenu(),
         ],
       ),
     );

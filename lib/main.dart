@@ -4,6 +4,7 @@ import 'features/dashboard/view/main_screen.dart';
 import 'shared/theme/app_theme.dart';
 import 'shared/theme/theme_provider.dart';
 import 'features/dashboard/viewmodel/notification_viewmodel.dart';
+import 'features/profile/viewmodel/auth_viewmodel.dart';
 
 void main() {
   runApp(
@@ -11,6 +12,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => NotificationViewModel()),
+        ChangeNotifierProvider(create: (_) => AuthViewModel()),
       ],
       child: const PaperLogApp(),
     ),
