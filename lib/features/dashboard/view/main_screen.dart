@@ -42,18 +42,23 @@ class _MainScreenState extends State<MainScreen> {
 
       body: Column(
         children: [
-          const SizedBox(height: 24),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (vm.isSidebarOpen) SidebarWidget(),
+                VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: Theme.of(context).dividerColor,
+                ),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        const SizedBox(height: 24),
                         Text(
                           'Recommended Papers',
                           style: Theme.of(context).textTheme.displayLarge

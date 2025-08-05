@@ -6,8 +6,9 @@ class ProfileViewmodel extends ChangeNotifier {
     avatarUrl: 'https://example.com/avatar.png',
     username: 'Starry Owl',
     bio: '자기 소개',
-    followers: '123',
-    following: '45',
+    subtitle: 'Flutter Developer',
+    followers: 123,
+    following: 45,
   );
 
   ProfileModel get profile => _profile;
