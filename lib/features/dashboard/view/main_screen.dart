@@ -5,6 +5,7 @@ import '../widgets/sidebar_widget.dart';
 import '../widgets/searchbar_widget.dart';
 import '../widgets/recommend_paper_card.dart';
 import '../widgets/folder_list_widget.dart';
+import 'package:provider/provider.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -31,23 +32,33 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<MainViewModel>();
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: HeaderWidget(),
+      ),
+
       body: Column(
         children: [
-          HeaderWidget(viewModel: vm),
-          const SizedBox(height: 24),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (vm.isSidebarOpen) SidebarWidget(viewModel: vm),
+                if (vm.isSidebarOpen) SidebarWidget(),
+                VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: Theme.of(context).dividerColor,
+                ),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        const SizedBox(height: 24),
                         Text(
                           'Recommended Papers',
                           style: Theme.of(context).textTheme.displayLarge

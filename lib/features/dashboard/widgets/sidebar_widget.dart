@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../viewmodel/dashboard_viewmodel.dart';
 
 class SidebarWidget extends StatelessWidget {
-  final MainViewModel viewModel;
-  const SidebarWidget({required this.viewModel, Key? key}) : super(key: key);
+  const SidebarWidget({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final viewModel = context.watch<MainViewModel>();
     return Container(
       width: 320,
       color: Theme.of(context).colorScheme.surface,

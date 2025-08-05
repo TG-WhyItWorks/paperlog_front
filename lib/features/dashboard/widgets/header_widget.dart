@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
-import '../viewmodel/dashboard_viewmodel.dart';
 import 'package:provider/provider.dart';
+import '../viewmodel/dashboard_viewmodel.dart';
 import '../../../shared/theme/theme_provider.dart';
 import 'notification_icon.dart';
-import '../../profile/viewmodel/auth_viewmodel.dart';
 import '../../profile/widgets/avatar_menu.dart';
 
 class HeaderWidget extends StatelessWidget {
-  final MainViewModel viewModel;
-  const HeaderWidget({required this.viewModel, Key? key}) : super(key: key);
+  const HeaderWidget({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final isLight = context.watch<ThemeProvider>().mode == ThemeMode.light;
+    final vm = context.watch<MainViewModel>();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
       decoration: BoxDecoration(
@@ -24,51 +23,66 @@ class HeaderWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           /// 사이드바 토글
-          GestureDetector(
-            onTap: viewModel.toggleSidebar,
-            child: Row(
-              children: [
-                Icon(
-                  viewModel.isSidebarOpen ? Icons.menu_open : Icons.menu,
-                  color: Theme.of(context).iconTheme.color,
-                ),
-              ],
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: vm.toggleSidebar,
+              child: Row(
+                children: [
+                  Icon(
+                    vm.isSidebarOpen ? Icons.menu_open : Icons.menu,
+                    color: Theme.of(context).iconTheme.color,
+                  ),
+                ],
+              ),
             ),
           ),
 
           const SizedBox(width: 20),
 
           /// 로고 및 Home 버튼
-          GestureDetector(
-            onTap: () => viewModel.navigationTo(PageType.home),
-            child: Row(
-              children: [
-                Text(
-                  'PaperLog',
-                  style: Theme.of(context).textTheme.displayLarge!.copyWith(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () {
+                // 현재 경로가 메인 페이지인지 확인
+                final current = ModalRoute.of(context)?.settings.name;
+                if (current != '/') {
+                  // 메인 페이지가 아니면 메인 페이지로 이동(쌓인 라우트 모두 정리)
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/', (route) => false);
+                }
+              },
+              child: Row(
+                children: [
+                  Text(
+                    'PaperLog',
+                    style: Theme.of(context).textTheme.displayLarge!.copyWith(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 20),
 
           _NavItem(
             label: 'Explore',
-            selected: viewModel.currentPage == PageType.explore,
-            onTap: () => viewModel.navigationTo(PageType.explore),
+            selected: vm.currentPage == PageType.explore,
+            onTap: () => vm.navigationTo(PageType.explore),
           ),
           _NavItem(
             label: 'My Library',
-            selected: viewModel.currentPage == PageType.library,
-            onTap: () => viewModel.navigationTo(PageType.library),
+            selected: vm.currentPage == PageType.library,
+            onTap: () => vm.navigationTo(PageType.library),
           ),
           _NavItem(
             label: 'My Blog',
-            selected: viewModel.currentPage == PageType.blog,
-            onTap: () => viewModel.navigationTo(PageType.blog),
+            selected: vm.currentPage == PageType.blog,
+            onTap: () => vm.navigationTo(PageType.blog),
           ),
 
           const Spacer(),
