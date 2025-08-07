@@ -49,7 +49,7 @@ class PaperLogApp extends StatelessWidget {
               ModalRoute.of(context)!.settings.arguments as String? ?? '';
           return ChangeNotifierProvider<ExploreViewmodel>(
             create: (_) => ExploreViewmodel()..search(initialQuery),
-            child: const ExplorePage(),
+            child: ExplorePage(initialQuery: initialQuery),
           );
         },
         //'/login': (context) => LoginPage(),

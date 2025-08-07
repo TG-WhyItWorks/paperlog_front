@@ -6,16 +6,36 @@ import '../../dashboard/widgets/header_widget.dart';
 import '../../dashboard/widgets/sidebar_widget.dart';
 import '../../dashboard/viewmodel/dashboard_viewmodel.dart';
 
-class ExplorePage extends StatelessWidget {
-  const ExplorePage({Key? key}) : super(key: key);
+class ExplorePage extends StatefulWidget {
+  final String initialQuery;
+  const ExplorePage({Key? key, required this.initialQuery}) : super(key: key);
+
+  @override
+  _ExplorePageState createState() => _ExplorePageState();
+}
+
+class _ExplorePageState extends State<ExplorePage> {
+  late final TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController(text: widget.initialQuery);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ExploreViewmodel>().search(widget.initialQuery);
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final initialQuery =
-        ModalRoute.of(context)?.settings.arguments as String? ?? '';
-
     return ChangeNotifierProvider(
-      create: (_) => ExploreViewmodel()..search(initialQuery ?? ''),
+      create: (_) => ExploreViewmodel(),
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: PreferredSize(
@@ -39,6 +59,7 @@ class ExplorePage extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: TextField(
+                        controller: _searchController,
                         decoration: InputDecoration(
                           hintText: '논문을 검색해 보세요',
                           border: OutlineInputBorder(
@@ -47,7 +68,10 @@ class ExplorePage extends StatelessWidget {
                           suffixIcon: const Icon(Icons.search),
                         ),
                         textInputAction: TextInputAction.search,
-                        onSubmitted: context.read<ExploreViewmodel>().search,
+                        onSubmitted: (q) {
+                          final query = q.trim();
+                          context.read<ExploreViewmodel>().search(query);
+                        },
                       ),
                     ),
                     Expanded(
