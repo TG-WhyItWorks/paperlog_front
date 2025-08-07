@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../viewmodel/auth_viewmodel.dart';
+import '../../auth/viewmodel/auth_viewmodel.dart';
 
 class AvatarMenu extends StatelessWidget {
   const AvatarMenu({Key? key}) : super(key: key);
@@ -74,7 +74,7 @@ class AvatarMenu extends StatelessWidget {
                   Navigator.of(context).pushNamed('/settings');
                   break;
                 case 'logout':
-                  context.read<AuthViewModel>().logout();
+                  context.read<AuthViewModel>().signOut();
                   break;
               }
             });
