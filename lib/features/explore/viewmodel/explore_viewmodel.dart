@@ -8,8 +8,11 @@ class ExploreViewmodel extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
   List<Paper> papers = [];
+  bool hasSearched = false;
 
   Future<void> search(String query) async {
+    hasSearched = true;
+    notifyListeners();
     if (query.trim().isEmpty) return;
     isLoading = true;
     errorMessage = null;
