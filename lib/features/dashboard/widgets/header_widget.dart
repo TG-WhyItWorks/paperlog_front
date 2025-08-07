@@ -72,7 +72,10 @@ class HeaderWidget extends StatelessWidget {
           _NavItem(
             label: 'Explore',
             selected: vm.currentPage == PageType.explore,
-            onTap: () => vm.navigationTo(PageType.explore),
+            onTap: () {
+              vm.navigationTo(PageType.explore);
+              Navigator.of(context).pushNamed('/explore');
+            },
           ),
           _NavItem(
             label: 'My Library',
