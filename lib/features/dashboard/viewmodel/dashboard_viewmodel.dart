@@ -14,6 +14,9 @@ class MainViewModel extends ChangeNotifier {
   /// 현재 선택된 페이지
   PageType currentPage = PageType.home;
 
+  String _searchQuery = '';
+  String get searchQuery => _searchQuery;
+
   MainViewModel() {
     _loadInitialData();
     _loadRecommendedPapers();
@@ -47,5 +50,12 @@ class MainViewModel extends ChangeNotifier {
   void navigationTo(PageType page) {
     currentPage = page;
     notifyListeners();
+  }
+
+  void setSearchQuery(String q) {
+    if (_searchQuery != q) {
+      _searchQuery = q;
+      notifyListeners();
+    }
   }
 }
