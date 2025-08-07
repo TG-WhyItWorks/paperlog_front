@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:paperlog_front/features/explore/view/explore_page.dart';
 import 'package:paperlog_front/features/explore/viewmodel/explore_viewmodel.dart';
+import 'package:paperlog_front/features/paper/view/paper_detail_page.dart';
+import 'package:paperlog_front/features/paper/viewmodel/paper_detail_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'features/dashboard/view/main_screen.dart';
 import 'shared/theme/app_theme.dart';
@@ -50,6 +52,14 @@ class PaperLogApp extends StatelessWidget {
           return ChangeNotifierProvider<ExploreViewmodel>(
             create: (_) => ExploreViewmodel()..search(initialQuery),
             child: ExplorePage(initialQuery: initialQuery),
+          );
+        },
+        '/paper': (context) {
+          final paperId =
+              ModalRoute.of(context)!.settings.arguments as String? ?? '';
+          return ChangeNotifierProvider(
+            create: (_) => PaperDetailViewModel()..loadDetail(paperId),
+            child: PaperDetailPage(paperId: paperId),
           );
         },
         //'/login': (context) => LoginPage(),
