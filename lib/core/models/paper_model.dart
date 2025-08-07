@@ -15,6 +15,18 @@ class Paper {
     required this.imageUrl,
   });
 
+  // JSON 변환 메소드
+  factory Paper.fromJson(Map<String, dynamic> json) {
+    return Paper(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      summary: json['summary'] as String,
+      tags: List<String>.from(json['tags'] ?? []),
+      recommendationReason: json['recommendationReason'] as String? ?? '',
+      imageUrl: json['imageUrl'] as String? ?? '',
+    );
+  }
+
   ///샘플 데이터 반환
   static List<Paper> sampleList() {
     return [

@@ -5,11 +5,31 @@ import '../../../shared/theme/theme_provider.dart';
 import 'notification_icon.dart';
 import '../../profile/widgets/avatar_menu.dart';
 
-class HeaderWidget extends StatelessWidget {
+class HeaderWidget extends StatefulWidget {
   const HeaderWidget({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  _HeaderWidgetState createState() => _HeaderWidgetState();
+}
+
+class _HeaderWidgetState extends State<HeaderWidget> {
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    final vm = context.read<MainViewModel>();
+    _ctrl = TextEditingController(text: vm.searchQuery);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  build(BuildContext context) {
     final isLight = context.watch<ThemeProvider>().mode == ThemeMode.light;
     final vm = context.watch<MainViewModel>();
     return Container(
@@ -72,7 +92,10 @@ class HeaderWidget extends StatelessWidget {
           _NavItem(
             label: 'Explore',
             selected: vm.currentPage == PageType.explore,
-            onTap: () => vm.navigationTo(PageType.explore),
+            onTap: () {
+              vm.navigationTo(PageType.explore);
+              Navigator.of(context).pushNamed('/explore');
+            },
           ),
           _NavItem(
             label: 'My Library',
@@ -91,6 +114,7 @@ class HeaderWidget extends StatelessWidget {
           SizedBox(
             width: 200,
             child: TextField(
+              controller: _ctrl,
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -109,8 +133,13 @@ class HeaderWidget extends StatelessWidget {
                 ),
               ),
               style: const TextStyle(color: Colors.white),
+              textInputAction: TextInputAction.search,
+              onChanged: vm.setSearchQuery,
               onSubmitted: (q) {
-                //TODO: 검색 기능 구현
+                final query = q.trim();
+                if (query.isNotEmpty) {
+                  Navigator.of(context).pushNamed('/explore', arguments: query);
+                }
               },
             ),
           ),

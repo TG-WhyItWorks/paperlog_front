@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:paperlog_front/features/explore/view/explore_page.dart';
+import 'package:paperlog_front/features/explore/viewmodel/explore_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'features/dashboard/view/main_screen.dart';
 import 'shared/theme/app_theme.dart';
@@ -42,6 +44,14 @@ class PaperLogApp extends StatelessWidget {
       routes: {
         '/': (_) => const MainScreen(),
         '/profile': (_) => ProfilePage(),
+        '/explore': (context) {
+          final initialQuery =
+              ModalRoute.of(context)!.settings.arguments as String? ?? '';
+          return ChangeNotifierProvider<ExploreViewmodel>(
+            create: (_) => ExploreViewmodel()..search(initialQuery),
+            child: ExplorePage(initialQuery: initialQuery),
+          );
+        },
         //'/login': (context) => LoginPage(),
         //'/settings': (context) => SettingsPage(),
       },
