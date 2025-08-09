@@ -1,10 +1,21 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in_web/google_sign_in_web.dart'
+    show
+        GSIButtonConfiguration,
+        GSIButtonType,
+        GSIButtonTheme,
+        GSIButtonSize,
+        GSIButtonText,
+        GSIButtonShape,
+        GSIButtonLogoAlignment;
 import 'package:provider/provider.dart';
 import '../viewmodel/auth_viewmodel.dart';
 import '../../dashboard/widgets/header_widget.dart';
 import '../../dashboard/widgets/sidebar_widget.dart';
 import 'package:paperlog_front/features/dashboard/viewmodel/dashboard_viewmodel.dart';
+
+import 'package:google_sign_in_web/web_only.dart' as web;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -15,6 +26,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailCtrl = TextEditingController();
   final _pwCtrl = TextEditingController();
+  bool _navigated = false;
 
   @override
   void dispose() {
@@ -25,7 +37,16 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final authVm = context.read<AuthViewModel>();
+    final authVm = context.watch<AuthViewModel>();
+
+    // ✅ 로그인 성공 시 한 번만 화면 전환
+    if (authVm.status == AuthStatus.authenticated && !_navigated) {
+      _navigated = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacementNamed('/'); // 목적지 라우트 확인
+      });
+    }
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: PreferredSize(
@@ -51,34 +72,47 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Sign in to PaperLog',
+                        'Sign in to PaperLog 5',
                         style: Theme.of(context).textTheme.displaySmall,
                       ),
                       const SizedBox(height: 32),
 
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black87,
-                          minimumSize: const Size.fromHeight(48),
-                          side: const BorderSide(color: Colors.grey),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
+                      if (kIsWeb)
+                        web.renderButton(
+                          configuration: GSIButtonConfiguration(
+                            type: GSIButtonType.standard,
+                            theme: GSIButtonTheme.filledBlue,
+                            size: GSIButtonSize.large,
+                            text: GSIButtonText.signinWith,
+                            shape: GSIButtonShape.pill,
+                            logoAlignment: GSIButtonLogoAlignment.center,
+                            minimumWidth: 300,
+                          ),
+                        )
+                      else
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black87,
+                            minimumSize: const Size.fromHeight(48),
+                            side: const BorderSide(color: Colors.grey),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                          icon: Image.asset(
+                            'assets/images/google_logo.png',
+                            height: 24,
+                            width: 24,
+                          ),
+                          onPressed: () async {
+                            await authVm.signInWithGoogle();
+                          },
+                          label: const Text(
+                            'Sign in with Google',
+                            style: TextStyle(fontWeight: FontWeight.w500),
                           ),
                         ),
-                        icon: Image.asset(
-                          'assets/images/google_logo.png',
-                          height: 24,
-                          width: 24,
-                        ),
-                        onPressed: () async {
-                          await authVm.signInWithGoogle();
-                        },
-                        label: const Text(
-                          'Sign in with Google',
-                          style: TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                      ),
 
                       const SizedBox(height: 24),
 
