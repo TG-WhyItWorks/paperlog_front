@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../viewmodel/auth_viewmodel.dart';
+import '../../auth/viewmodel/auth_viewmodel.dart';
 
 class AvatarMenu extends StatelessWidget {
   const AvatarMenu({Key? key}) : super(key: key);
@@ -45,7 +45,6 @@ class AvatarMenu extends StatelessWidget {
             final items = <PopupMenuEntry<String>>[
               if (!auth.isLoggedIn) ...[
                 const PopupMenuItem(value: 'login', child: Text('로그인/회원가입')),
-                const PopupMenuItem(value: 'profile', child: Text('내 프로필')),
                 const PopupMenuItem(value: 'settings', child: Text('설정')),
               ] else ...[
                 const PopupMenuItem(value: 'profile', child: Text('내 프로필')),
@@ -74,7 +73,11 @@ class AvatarMenu extends StatelessWidget {
                   Navigator.of(context).pushNamed('/settings');
                   break;
                 case 'logout':
-                  context.read<AuthViewModel>().logout();
+                  context.read<AuthViewModel>().signOut();
+                  if (!context.mounted) return;
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/', (route) => false);
                   break;
               }
             });

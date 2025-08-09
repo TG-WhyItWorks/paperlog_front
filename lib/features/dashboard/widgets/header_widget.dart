@@ -100,7 +100,13 @@ class _HeaderWidgetState extends State<HeaderWidget> {
           _NavItem(
             label: 'My Library',
             selected: vm.currentPage == PageType.library,
-            onTap: () => vm.navigationTo(PageType.library),
+            onTap: () {
+              vm.navigationTo(PageType.library);
+              final current = ModalRoute.of(context)?.settings.name;
+              if (current != '/library') {
+                Navigator.of(context).pushNamed('/library');
+              }
+            },
           ),
           _NavItem(
             label: 'My Blog',
