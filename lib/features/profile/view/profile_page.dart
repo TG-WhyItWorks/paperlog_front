@@ -10,6 +10,9 @@ import '../../dashboard/widgets/header_widget.dart';
 import '../../dashboard/widgets/sidebar_widget.dart';
 import '../../auth/viewmodel/auth_viewmodel.dart';
 
+import '../widgets/badge_card.dart';
+import '../widgets/interest_card.dart';
+
 class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -47,7 +50,7 @@ class ProfilePage extends StatelessWidget {
                         builder: (context, constraints) {
                           final isWeb = constraints.maxWidth > 600;
                           final avatarSize = isWeb ? 120.0 : 80.0;
-                          final cardWidth = isWeb ? 600.0 : double.infinity;
+                          final cardWidth = isWeb ? 800.0 : double.infinity;
                           return Center(
                             child: Container(
                               width: cardWidth,
@@ -153,6 +156,10 @@ class ProfilePage extends StatelessWidget {
                                       child: Text('프로필 수정'),
                                     ),
                                   ),
+                                  const SizedBox(height: 24),
+                                  InterestCard(interests: vm.interests),
+                                  const SizedBox(height: 24),
+                                  BadgeCard(badges: vm.badges),
                                 ],
                               ),
                             ),

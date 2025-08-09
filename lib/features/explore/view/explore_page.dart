@@ -65,12 +65,17 @@ class _ExplorePageState extends State<ExplorePage> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        suffixIcon: const Icon(Icons.search),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.search),
+                          onPressed: () {
+                            final q = _searchController.text.trim();
+                            context.read<ExploreViewmodel>().search(q);
+                          },
+                        ),
                       ),
                       textInputAction: TextInputAction.search,
                       onSubmitted: (q) {
-                        final query = q.trim();
-                        context.read<ExploreViewmodel>().search(query);
+                        context.read<ExploreViewmodel>().search(q.trim());
                       },
                     ),
                   ),

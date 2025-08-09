@@ -5,7 +5,7 @@ import '../../../core/services/token_storage.dart';
 import 'package:flutter/foundation.dart';
 
 class AuthService {
-  final String baseUrl = 'https://e173e74c5543.ngrok-free.app/auth';
+  final String baseUrl = 'https://f79dcee01290.ngrok-free.app /auth';
   final _tokenStorage = TokenStorage();
 
   Map<String, String> _baseHeaders() => {

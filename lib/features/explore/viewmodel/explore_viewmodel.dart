@@ -11,16 +11,23 @@ class ExploreViewmodel extends ChangeNotifier {
   bool hasSearched = false;
 
   Future<void> search(String query) async {
+    final q = query.trim();
+
+    if (q.isEmpty) {
+      // 초기 상태 유지
+      return;
+    }
+
     hasSearched = true;
-    notifyListeners();
-    if (query.trim().isEmpty) return;
     isLoading = true;
     errorMessage = null;
     notifyListeners();
 
     try {
-      papers = await _service.fetchPapers(query);
+      papers = await _service.fetchPapers(q);
+      debugPrint('[ARXIV] parsed papers = ${papers.length}');
     } catch (e) {
+      debugPrint('[ARXIV][ERR] $e');
       errorMessage = e.toString();
     } finally {
       isLoading = false;
