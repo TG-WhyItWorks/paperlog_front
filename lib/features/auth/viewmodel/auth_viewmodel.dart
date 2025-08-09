@@ -33,6 +33,7 @@ class AuthViewModel extends ChangeNotifier {
         notifyListeners();
         return;
       }
+      userAvatarUrl = account.photoUrl;
       try {
         final auth =
             await account.authentication; // v6: 여기서 idToken/accessToken
@@ -137,6 +138,14 @@ class AuthViewModel extends ChangeNotifier {
     try {
       await _authService.logout();
       await _googleSignIn.signOut();
+      if (userAvatarUrl != null && userAvatarUrl!.isNotEmpty) {
+        try {
+          PaintingBinding.instance.imageCache.evict(
+            NetworkImage(userAvatarUrl!),
+          );
+        } catch (_) {}
+      }
+      userAvatarUrl = null;
       _user = null;
       _status = AuthStatus.unauthenticated;
     } catch (e) {

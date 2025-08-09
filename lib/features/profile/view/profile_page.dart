@@ -8,12 +8,14 @@ import '../widgets/profile_avatar_widget.dart';
 import '../widgets/profile_stat_widget.dart';
 import '../../dashboard/widgets/header_widget.dart';
 import '../../dashboard/widgets/sidebar_widget.dart';
+import '../../auth/viewmodel/auth_viewmodel.dart';
 
 class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ProfileViewmodel()..loadProfile(),
+      create: (ctx) =>
+          ProfileViewmodel(ctx.read<AuthViewModel>())..loadProfile(),
       child: Consumer<ProfileViewmodel>(
         builder: (context, vm, _) {
           final profile = vm.profile;

@@ -9,9 +9,24 @@ class ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: size / 2,
-      backgroundImage: NetworkImage(avatarUrl),
+    final url = (avatarUrl ?? '').trim();
+
+    if (url.isEmpty) {
+      return CircleAvatar(radius: size / 2, child: const Icon(Icons.person));
+    }
+    return ClipOval(
+      child: Image.network(
+        url,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return CircleAvatar(
+            radius: size / 2,
+            child: const Icon(Icons.person),
+          );
+        },
+      ),
     );
   }
 }
