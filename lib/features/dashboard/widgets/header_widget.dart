@@ -94,7 +94,10 @@ class _HeaderWidgetState extends State<HeaderWidget> {
             selected: vm.currentPage == PageType.explore,
             onTap: () {
               vm.navigationTo(PageType.explore);
-              Navigator.of(context).pushNamed('/explore');
+              final current = ModalRoute.of(context)?.settings.name;
+              if (current != '/explore') {
+                Navigator.of(context).pushNamed('/explore');
+              }
             },
           ),
           _NavItem(
@@ -111,7 +114,13 @@ class _HeaderWidgetState extends State<HeaderWidget> {
           _NavItem(
             label: 'My Blog',
             selected: vm.currentPage == PageType.blog,
-            onTap: () => vm.navigationTo(PageType.blog),
+            onTap: () {
+              vm.navigationTo(PageType.library);
+              final current = ModalRoute.of(context)?.settings.name;
+              if (current != '/blog') {
+                Navigator.of(context).pushNamed('/blog');
+              }
+            },
           ),
 
           const Spacer(),

@@ -15,6 +15,24 @@ class Paper {
     required this.imageUrl,
   });
 
+  Paper copyWith({
+    String? id,
+    String? title,
+    String? summary,
+    List<String>? tags,
+    String? recommendationReason,
+    String? imageUrl,
+  }) {
+    return Paper(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      summary: summary ?? this.summary,
+      tags: tags ?? List<String>.from(this.tags),
+      recommendationReason: recommendationReason ?? this.recommendationReason,
+      imageUrl: imageUrl ?? this.imageUrl,
+    );
+  }
+
   // JSON 변환 메소드
   factory Paper.fromJson(Map<String, dynamic> json) {
     return Paper(
