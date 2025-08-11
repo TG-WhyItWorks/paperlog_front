@@ -2,19 +2,17 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../core/models/paper_detail_model.dart';
 import 'package:flutter/foundation.dart';
+import '../../../core/config/api_config.dart';
 
 class PaperService {
-  static const _host = 'daf1d4db1de5.ngrok-free.app';
-  static const _basePath = '/api/arxiv';
-
-  Map<String, String> _headers() => const {
+  Map<String, String> _headers() => {
+    ...ApiConfig.baseHeaders(json: false),
     'Accept': 'application/json',
-    'ngrok-skip-browser-warning': 'true',
   };
 
   Future<PaperDetail> fetchDetail(String paperId) async {
-    final uri = Uri.https(_host, '$_basePath/$paperId');
-    debugPrint('[DETAIL] GET $uri');
+    final uri = ApiConfig.uri('/api/arxiv/$paperId');
+    ApiConfig.logReq('[DETAIL] GET', uri);
 
     final response = await http
         .get(uri, headers: _headers())

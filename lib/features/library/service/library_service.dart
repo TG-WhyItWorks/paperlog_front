@@ -3,23 +3,13 @@ import '../../../core/models/library_models.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:typed_data';
-import 'package:http_parser/http_parser.dart';
-import 'package:mime/mime.dart';
 import '../../../core/services/token_storage.dart';
+import '../../../core/config/api_config.dart';
 
 class LibraryService {
-  // dart-define으로 주입: flutter run -d chrome --dart-define=API_URL=https://daf1d4db1de5.ngrok-free.app
-  static const _baseUrl = String.fromEnvironment(
-    'API_URL',
-    defaultValue: 'http://localhost:8000',
-  );
-
   final _tokenStorage = TokenStorage();
-  Map<String, String> _baseHeaders() => const {
-    'Content-Type': 'application/json',
-    // ngrok 경고 페이지 우회
-    'ngrok-skip-browser-warning': 'true',
-  };
+  Map<String, String> _baseHeaders() => ApiConfig.baseHeaders();
+
   Future<Map<String, String>> _authHeaders() async {
     final at = await _tokenStorage.readAccessToken();
     if (at == null || at.isEmpty) return _baseHeaders();
@@ -27,7 +17,7 @@ class LibraryService {
   }
 
   Future<List<LibraryItem>> fetchLibrary() async {
-    final uri = Uri.parse('$_baseUrl/library'); // FastAPI: GET /library
+    final uri = ApiConfig.uri('/library');
     try {
       final res = await http.get(uri, headers: await _authHeaders());
       if (res.statusCode == 200) {
@@ -84,7 +74,7 @@ class LibraryService {
     required String folderName,
     int? parentFolderId,
   }) async {
-    final uri = Uri.parse('$_baseUrl/folders');
+    final uri = ApiConfig.uri('/folders');
     final res = await http.post(
       uri,
       headers: await _authHeaders(),
@@ -114,7 +104,7 @@ class LibraryService {
     Map<String, String>? fields,
     int? folderId,
   }) async {
-    final uri = Uri.parse('$_baseUrl/private-papers/upload');
+    final uri = ApiConfig.uri('/private-papers/upload');
     final req = http.MultipartRequest('POST', uri);
     if (fields != null) req.fields.addAll(fields);
     // 인증/ngrok 헤더 추가
@@ -128,16 +118,8 @@ class LibraryService {
       req.fields['folder_id'] = folderId.toString();
     }
 
-    //final mime = lookupMimeType(filename) ?? 'application/pdf';
-    //final parts = mime.split('/');
-
     req.files.add(
-      http.MultipartFile.fromBytes(
-        'file',
-        bytes,
-        filename: filename,
-        //contentType: MediaType(parts.first, parts.last),
-      ),
+      http.MultipartFile.fromBytes('file', bytes, filename: filename),
     );
 
     final streamed = await req.send();
