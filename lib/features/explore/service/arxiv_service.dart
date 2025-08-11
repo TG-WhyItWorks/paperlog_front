@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 
 class ArxivService {
   // 프록시 서버 엔드 포인트
-  static const _host = 'f79dcee01290.ngrok-free.app';
+  static const _host = 'b7b8f1b2cd2c.ngrok-free.app';
   static const _path = '/api/arxiv';
 
   Map<String, String> _headers() => const {
@@ -50,7 +50,7 @@ class ArxivService {
   Map<String, dynamic> _normalize(Map<String, dynamic> j) {
     return {
       // 아래 키들은 Paper.fromJson에서 쓰는 키 이름에 맞춰 변환해주세요.
-      'id': j['id']?.toString() ?? '',
+      'id': j['arxiv_id']?.toString() ?? '',
       'title': j['title'] ?? '',
       'summary': j['summary'] ?? j['abstract'] ?? '',
       'tags': (j['tags'] ?? j['categories'] ?? const [])

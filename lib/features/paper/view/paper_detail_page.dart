@@ -23,10 +23,6 @@ class _PaperDetailedPageState extends State<PaperDetailPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PaperDetailViewModel>().loadDetail(widget.paperId);
-    });
   }
 
   @override
@@ -125,6 +121,7 @@ class _PaperDetailedPageState extends State<PaperDetailPage>
           SizedBox(
             height: 300,
             child: TabBarView(
+              controller: _tabController,
               children: [
                 SingleChildScrollView(
                   padding: EdgeInsets.all(16),

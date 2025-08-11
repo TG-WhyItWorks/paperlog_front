@@ -4,8 +4,8 @@ import '../../../core/models/paper_detail_model.dart';
 import 'package:flutter/foundation.dart';
 
 class PaperService {
-  static const _host = 'f79dcee01290.ngrok-free.app';
-  static const _basePath = '/api';
+  static const _host = 'b7b8f1b2cd2c.ngrok-free.app';
+  static const _basePath = '/api/arxiv';
 
   Map<String, String> _headers() => const {
     'Accept': 'application/json',
@@ -13,7 +13,7 @@ class PaperService {
   };
 
   Future<PaperDetail> fetchDetail(String paperId) async {
-    final uri = Uri.https(_host, '$_basePath/papers/$paperId');
+    final uri = Uri.https(_host, '$_basePath/$paperId');
     debugPrint('[DETAIL] GET $uri');
 
     final response = await http

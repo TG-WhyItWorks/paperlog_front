@@ -23,42 +23,46 @@ class PaperCard extends StatelessWidget {
             children: [
               Text(
                 paper.title,
-                style: Theme.of(context).textTheme.headlineMedium,
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
-              const SizedBox(height: 4),
-              Text(paper.summary, maxLines: 3, overflow: TextOverflow.ellipsis),
-              if (paper.tags.isNotEmpty) ...[
-                const SizedBox(height: 8),
+              const SizedBox(height: 8),
+              // ✅ (추가) 저자 및 연도 정보 표시
+              Text(
+                '${paper.authors.join(', ')} (${paper.year})',
+                style: Theme.of(context).textTheme.bodySmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+
+              // ✅ (수정) summary -> abstractText
+              Text(
+                paper.abstractText,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 12),
+
+              // ✅ (수정) tags -> fields
+              if (paper.fields.isNotEmpty)
                 Wrap(
                   spacing: 6,
-                  children: paper.tags
+                  runSpacing: 4,
+                  children: paper.fields
                       .map(
-                        (tag) => Chip(
-                          label: Text(tag, style: TextStyle(fontSize: 12)),
+                        (field) => Chip(
+                          label: Text(field, style: TextStyle(fontSize: 12)),
+                          // 칩 디자인을 조금 더 컴팩트하게 조절
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 0,
+                          ),
                         ),
                       )
                       .toList(),
                 ),
-              ],
-              if (paper.recommendationReason.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  '추천 이유: ${paper.recommendationReason}',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-              ],
-              if (paper.imageUrl.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: Image.network(
-                    paper.imageUrl,
-                    height: 100,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ],
             ],
           ),
         ),

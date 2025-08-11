@@ -11,7 +11,9 @@ class BlogPostCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: InkWell(
-        onTap: () => launchUrl(Uri.parse(blog.url)),
+        onTap: () {
+          if (blog.url.isNotEmpty) launchUrl(Uri.parse(blog.url));
+        },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -39,7 +41,9 @@ class BlogPostCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     TextButton(
-                      onPressed: () => launchUrl(Uri.parse(blog.url)),
+                      onPressed: () {
+                        if (blog.url.isNotEmpty) launchUrl(Uri.parse(blog.url));
+                      },
                       child: Text('Visit'),
                     ),
                   ],
