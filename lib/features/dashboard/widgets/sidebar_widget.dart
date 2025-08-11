@@ -6,10 +6,15 @@ import '../../library/viewmodel/library_viewmodel.dart';
 import '../../auth/viewmodel/auth_viewmodel.dart';
 import 'dart:math' as math;
 
-class SidebarWidget extends StatelessWidget {
+class SidebarWidget extends StatefulWidget {
   const SidebarWidget({Key? key}) : super(key: key);
   static const double _kSidebarWidth = 320.0;
 
+  @override
+  State<SidebarWidget> createState() => _SideBarWidgetState();
+}
+
+class _SideBarWidgetState extends State<SidebarWidget> {
   Future<void> _addFolder(BuildContext context) async {
     final libVm = context.read<LibraryViewModel>();
     final auth = context.read<AuthViewModel>();
@@ -70,86 +75,91 @@ class SidebarWidget extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 280),
       curve: Curves.easeInOutCubic,
-      width: isOpen ? _kSidebarWidth : 0,
+      width: isOpen ? SidebarWidget._kSidebarWidth : 0,
       color: Theme.of(context).colorScheme.surface,
-      padding: EdgeInsets.all(isOpen ? 16 : 0),
+      child: ClipRect(
+        child: OverflowBox(
+          maxWidth: SidebarWidget._kSidebarWidth,
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+            width: SidebarWidget._kSidebarWidth,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
 
-      child: AnimatedSlide(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeInOutCubic,
-        offset: isOpen ? Offset.zero : const Offset(-0.06, 0),
-        child: ClipRect(
-          child: AnimatedOpacity(
-            opacity: isOpen ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOutCubic,
-            child: IgnorePointer(
-              ignoring: !isOpen,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ===== Quick Lists =====
-                    Text(
-                      'My Library',
-                      style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    libItem('Want to read', LibrarySection.wantToRead),
-                    libItem('Reading', LibrarySection.reading),
-                    libItem('Completed', LibrarySection.completed),
-
-                    const Divider(height: 24),
-
-                    // ===== Collections (My publications / Private / Folders) =====
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: AnimatedOpacity(
+                opacity: isOpen ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeInOutCubic,
+                child: IgnorePointer(
+                  ignoring: !isOpen,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // ===== Quick Lists =====
                         Text(
-                          'My Collections',
+                          'My Library',
                           style: Theme.of(context).textTheme.titleLarge!
                               .copyWith(fontWeight: FontWeight.bold),
                         ),
-                        if (auth.isLoggedIn)
-                          IconButton(
-                            tooltip: 'New folder',
-                            icon: Icon(
-                              Icons.add,
-                              color: Theme.of(context).iconTheme.color,
+                        const SizedBox(height: 8),
+                        libItem('Want to read', LibrarySection.wantToRead),
+                        libItem('Reading', LibrarySection.reading),
+                        libItem('Completed', LibrarySection.completed),
+
+                        const Divider(height: 24),
+
+                        // ===== Collections (My publications / Private / Folders) =====
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'My Collections',
+                              style: Theme.of(context).textTheme.titleLarge!
+                                  .copyWith(fontWeight: FontWeight.bold),
                             ),
-                            onPressed: () => _addFolder(context),
+                            if (auth.isLoggedIn)
+                              IconButton(
+                                tooltip: 'New folder',
+                                icon: Icon(
+                                  Icons.add,
+                                  color: Theme.of(context).iconTheme.color,
+                                ),
+                                onPressed: () => _addFolder(context),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        _collectionRow(
+                          context,
+                          title: 'My publications',
+                          count: lib
+                              .section(LibrarySection.myPublications)
+                              .length,
+                          icon: Icons.school_outlined,
+                          onTap: () => Navigator.of(context).pushNamed(
+                            '/library',
+                            arguments: LibrarySection.myPublications,
                           ),
+                        ),
+                        if (auth.isLoggedIn)
+                          _collectionRow(
+                            context,
+                            title: 'Private Papers',
+                            count: lib.section(LibrarySection.private).length,
+                            icon: Icons.lock_outline,
+                            onTap: () => Navigator.of(context).pushNamed(
+                              '/library',
+                              arguments: LibrarySection.private,
+                            ),
+                          ),
+
+                        // 사용자 폴더
+                        if (auth.isLoggedIn)
+                          ..._buildFolderTreeSidebar(context, lib),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    _collectionRow(
-                      context,
-                      title: 'My publications',
-                      count: lib.section(LibrarySection.myPublications).length,
-                      icon: Icons.school_outlined,
-                      onTap: () => Navigator.of(context).pushNamed(
-                        '/library',
-                        arguments: LibrarySection.myPublications,
-                      ),
-                    ),
-                    if (auth.isLoggedIn)
-                      _collectionRow(
-                        context,
-                        title: 'Private Papers',
-                        count: lib.section(LibrarySection.private).length,
-                        icon: Icons.lock_outline,
-                        onTap: () => Navigator.of(context).pushNamed(
-                          '/library',
-                          arguments: LibrarySection.private,
-                        ),
-                      ),
-
-                    // 사용자 폴더
-                    if (auth.isLoggedIn)
-                      ..._buildFolderTreeSidebar(context, lib),
-                  ],
+                  ),
                 ),
               ),
             ),
