@@ -15,8 +15,7 @@ import 'features/profile/view/profile_page.dart';
 import 'features/library/view/library_page.dart';
 import 'features/library/viewmodel/library_viewmodel.dart';
 import 'core/models/library_models.dart';
-//import 'features/auth/view/login_page.dart';
-//import 'features/settings/view/settings_page.dart';
+import 'features/settings/viewmodel/settings_viewmodel.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,12 +51,6 @@ class PaperLogApp extends StatelessWidget {
       routes: {
         '/': (_) => const MainScreen(),
         '/login': (_) => const LoginPage(),
-
-        // '/login': (context) => ChangeNotifierProvider.value(
-        //   value: Provider.of<AuthViewModel>(context, listen: false),
-        //   child: const LoginPage(),
-        // ),
-        //'/signup':(_) => const SignUpPage(),
         '/profile': (_) => ProfilePage(),
         '/explore': (context) {
           final initialQuery =
@@ -75,11 +68,7 @@ class PaperLogApp extends StatelessWidget {
             child: PaperDetailPage(paperId: paperId),
           );
         },
-        '/library': (context) {
-          return LibraryPage();
-        },
-        //'/login': (context) => LoginPage(),
-        //'/settings': (context) => SettingsPage(),
+        '/library': (context) => const LibraryPage(),
       },
 
       //존재하지 않는 라우트 요청 시 처리

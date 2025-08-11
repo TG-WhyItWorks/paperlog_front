@@ -3,10 +3,14 @@ import 'package:flutter/foundation.dart';
 /// 서버와 연결할 때는 뒷 주소만 바꿔서 실행
 /// flutter run -d chrome --web-port 5173 --dart-define=API_URL=https://daf1d4db1de5.ngrok-free.app
 class ApiConfig {
-  static const String origin = String.fromEnvironment(
-    'API_ORIGIN',
-    defaultValue: 'http://localhost:8000',
+  static const String _envBase = String.fromEnvironment(
+    'API_URL',
+    defaultValue: '',
   );
+
+  static final String baseUrl = _envBase.isNotEmpty
+      ? _envBase
+      : 'http://localhost:8000';
 
   // ngrok 경고 우회를 위한 공통 헤더
   static Map<String, String> baseHeaders({bool json = true}) {
@@ -18,7 +22,7 @@ class ApiConfig {
 
   // 쿼리 파라미터를 포함한 uri (path 설정)
   static Uri uri(String path, [Map<String, dynamic>? query]) {
-    final base = Uri.parse(origin);
+    final base = Uri.parse(baseUrl);
     final mergedPath = _join(base.path, path);
     return base.replace(
       path: mergedPath,

@@ -120,7 +120,7 @@ class _LibraryContent extends StatelessWidget {
           child: TextField(
             onChanged: vm.updateQuery,
             decoration: InputDecoration(
-              hintText: 'Search bookmarks...',
+              hintText: 'Search on bookmarks...',
               prefixIcon: const Icon(Icons.search),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
@@ -134,102 +134,124 @@ class _LibraryContent extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        AnimatedSize(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeInOutCubic,
-          child: vm.isSelecting
-              ? Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.surfaceVariant.withOpacity(0.35),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Theme.of(context).dividerColor.withOpacity(0.6),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      // 이동
-                      PopupMenuButton<String>(
-                        tooltip: 'Move',
-                        itemBuilder: (ctx) => [
-                          const PopupMenuItem(
-                            value: 'want',
-                            child: Text('Move → Want to read'),
-                          ),
-                          const PopupMenuItem(
-                            value: 'reading',
-                            child: Text('Move → Reading'),
-                          ),
-                          const PopupMenuItem(
-                            value: 'completed',
-                            child: Text('Move → Completed'),
-                          ),
-                          const PopupMenuDivider(),
-                          const PopupMenuItem(
-                            value: 'folder',
-                            child: Text('Move → Folder…'),
-                          ),
-                        ],
-                        onSelected: (v) async {
-                          if (v == 'want')
-                            await vm.moveSelectedToSection(
-                              LibrarySection.wantToRead,
-                            );
-                          if (v == 'reading')
-                            await vm.moveSelectedToSection(
-                              LibrarySection.reading,
-                            );
-                          if (v == 'completed')
-                            await vm.moveSelectedToSection(
-                              LibrarySection.completed,
-                            );
-                          if (v == 'folder') {
-                            final id = await _pickFolder(
-                              context,
-                              vm,
-                            ); // ⬅ 아래 함수 추가
-                            if (id != null) await vm.moveSelectedToFolder(id);
-                          }
-                        },
-                        child: Row(
-                          children: const [
-                            Icon(Icons.drive_file_move_outlined, size: 18),
-                            SizedBox(width: 6),
-                            Text('Move'),
-                            Icon(Icons.arrow_drop_down),
-                          ],
+        //체크박스 선택시 나타나는 행
+        ClipRect(
+          // overflow 깔끔히 자르기
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeInOutCubic,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) {
+                // 위에서 내려오고(enter), 위로 사라짐(exit)
+                final slide = Tween<Offset>(
+                  begin: const Offset(0, -0.25), // 위(-y)에서 시작
+                  end: Offset.zero,
+                ).animate(animation);
+
+                return SlideTransition(
+                  position: slide,
+                  child: FadeTransition(opacity: animation, child: child),
+                );
+              },
+              child: vm.isSelecting
+                  ? Container(
+                      key: const ValueKey('select-bar'), // AnimatedSwitcher 구분
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceVariant.withOpacity(0.35),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Theme.of(
+                            context,
+                          ).dividerColor.withOpacity(0.6),
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      // 삭제
-                      TextButton.icon(
-                        onPressed: () async => await vm.deleteSelected(),
-                        icon: const Icon(Icons.delete_outline),
-                        label: const Text('Delete'),
+                      child: Row(
+                        children: [
+                          // --- Move ---
+                          PopupMenuButton<String>(
+                            tooltip: 'Move',
+                            itemBuilder: (ctx) => const [
+                              PopupMenuItem(
+                                value: 'want',
+                                child: Text('Move → Want to read'),
+                              ),
+                              PopupMenuItem(
+                                value: 'reading',
+                                child: Text('Move → Reading'),
+                              ),
+                              PopupMenuItem(
+                                value: 'completed',
+                                child: Text('Move → Completed'),
+                              ),
+                              PopupMenuDivider(),
+                              PopupMenuItem(
+                                value: 'folder',
+                                child: Text('Move → Folder…'),
+                              ),
+                            ],
+                            onSelected: (v) async {
+                              if (v == 'want')
+                                await vm.moveSelectedToSection(
+                                  LibrarySection.wantToRead,
+                                );
+                              if (v == 'reading')
+                                await vm.moveSelectedToSection(
+                                  LibrarySection.reading,
+                                );
+                              if (v == 'completed')
+                                await vm.moveSelectedToSection(
+                                  LibrarySection.completed,
+                                );
+                              if (v == 'folder') {
+                                final id = await _pickFolder(context, vm);
+                                if (id != null)
+                                  await vm.moveSelectedToFolder(id);
+                              }
+                            },
+                            child: Row(
+                              children: const [
+                                Icon(Icons.drive_file_move_outlined, size: 18),
+                                SizedBox(width: 6),
+                                Text('Move'),
+                                Icon(Icons.arrow_drop_down),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // --- Delete ---
+                          TextButton.icon(
+                            onPressed: () async => await vm.deleteSelected(),
+                            icon: const Icon(Icons.delete_outline),
+                            label: const Text('Delete'),
+                          ),
+                          const Spacer(),
+                          // --- Count ---
+                          Text(
+                            '${vm.selectedPaperCount} papers'
+                            '${vm.selectedPostCount > 0 ? ' · ${vm.selectedPostCount} posts' : ''}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          const SizedBox(width: 12),
+                          TextButton(
+                            onPressed: vm.clearSelection,
+                            child: const Text('Cancel'),
+                          ),
+                        ],
                       ),
-                      const Spacer(),
-                      // 개수
-                      Text(
-                        '${vm.selectedPaperCount} papers'
-                        '${vm.selectedPostCount > 0 ? ' · ${vm.selectedPostCount} posts' : ''}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(width: 12),
-                      TextButton(
-                        onPressed: vm.clearSelection,
-                        child: const Text('Cancel'),
-                      ),
-                    ],
-                  ),
-                )
-              : const SizedBox.shrink(),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('empty')),
+            ),
+          ),
         ),
 
         Expanded(
@@ -369,7 +391,7 @@ class _RecentContent extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
-            '최근 본 블로그 포스트',
+            '최근 본 포스트',
             style: Theme.of(
               context,
             ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
@@ -495,7 +517,7 @@ List<Widget> _buildFolderTree(BuildContext context, LibraryViewModel vm) {
             ),
           );
           if (newName != null && newName.isNotEmpty) {
-            await vm.renameFolder(f.id!, newName); // ⬅ ViewModel에 구현
+            await vm.renameFolder(f.id!, newName);
             await vm.refresh();
           }
         },
@@ -518,7 +540,7 @@ List<Widget> _buildFolderTree(BuildContext context, LibraryViewModel vm) {
             ),
           );
           if (ok == true) {
-            await vm.deleteFolder(f.id!); // ⬅ ViewModel에 구현
+            await vm.deleteFolder(f.id!);
             await vm.refresh();
           }
         },
@@ -630,7 +652,7 @@ class _PaperRowState extends State<_PaperRow> {
               ),
           ],
         ),
-        // ⬅ 요약 제거, 날짜 · 저자만
+        // 날짜 · 저자만
         subtitle: Row(
           children: [
             if (_dateString(p).isNotEmpty)

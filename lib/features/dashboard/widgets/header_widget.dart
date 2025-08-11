@@ -4,6 +4,7 @@ import '../viewmodel/dashboard_viewmodel.dart';
 import '../../../shared/theme/theme_provider.dart';
 import 'notification_icon.dart';
 import '../../profile/widgets/avatar_menu.dart';
+import '../../settings/view/settings_dialog.dart';
 
 class HeaderWidget extends StatefulWidget {
   const HeaderWidget({Key? key}) : super(key: key);
@@ -169,6 +170,10 @@ class _HeaderWidgetState extends State<HeaderWidget> {
             onPressed: () => context.read<ThemeProvider>().toggle(),
           ),
           const NotificationIcon(),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => SettingsDialog.show(context),
+          ),
           const SizedBox(width: 16),
 
           /// 프로필 아바타
