@@ -7,10 +7,14 @@ import 'package:paperlog_front/features/dashboard/viewmodel/dashboard_viewmodel.
 import '../viewmodel/library_viewmodel.dart';
 import '../../../core/models/library_models.dart';
 import '../../auth/viewmodel/auth_viewmodel.dart';
+import '../../../core/models/paper_model.dart';
 
 class LibraryPage extends StatelessWidget {
   final LibrarySection? initialSection;
-  const LibraryPage({Key? key, this.initialSection}) : super(key: key);
+  //0 = library, 1= Recent
+  final int initialTab;
+  const LibraryPage({Key? key, this.initialSection, this.initialTab = 0})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +22,20 @@ class LibraryPage extends StatelessWidget {
     final vm = context.watch<LibraryViewModel>();
     final auth = context.watch<AuthViewModel>();
     vm.bindAuth(auth);
+
+    final args = ModalRoute.of(context)?.settings.arguments;
+    int effectiveTab = initialTab;
+    LibrarySection? effectiveSection = initialSection;
+    if (args is Map) {
+      final t = args['initialTab'];
+      if (t is int) effectiveTab = t.clamp(0, 1);
+      final sec = args['section'];
+      if (sec is LibrarySection) effectiveSection = sec;
+    } else if (args is int) {
+      effectiveTab = args.clamp(0, 1);
+    } else if (args is LibrarySection) {
+      effectiveSection = args;
+    }
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -44,7 +62,35 @@ class LibraryPage extends StatelessWidget {
                   ? const Center(child: CircularProgressIndicator())
                   : vm.error != null
                   ? Center(child: Text('로드 실패: ${vm.error}'))
-                  : _LibraryContent(vm: vm, initialSection: initialSection),
+                  : DefaultTabController(
+                      length: 2,
+                      initialIndex: effectiveTab,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TabBar(
+                            isScrollable: false,
+                            labelColor: Theme.of(context).colorScheme.onSurface,
+                            tabs: const [
+                              Tab(text: 'Library'),
+                              Tab(text: 'Recent'),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Expanded(
+                            child: TabBarView(
+                              children: [
+                                _LibraryContent(
+                                  vm: vm,
+                                  initialSection: effectiveSection,
+                                ),
+                                const _RecentContent(),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
             ),
           ),
         ],
@@ -88,57 +134,6 @@ class _LibraryContent extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // // 액션
-        // Wrap(
-        //   spacing: 12,
-        //   runSpacing: 8,
-        //   children: [
-        //     if (auth.isLoggedIn)
-        //       OutlinedButton.icon(
-        //         onPressed: () => context
-        //             .read<LibraryViewModel>()
-        //             .uploadPrivatePaper(context),
-        //         icon: const Icon(Icons.upload_file),
-        //         label: const Text('Upload Private Paper'),
-        //       ),
-        //     if (auth.isLoggedIn)
-        //       OutlinedButton.icon(
-        //         onPressed: () async {
-        //           final controller = TextEditingController();
-        //           final name = await showDialog<String>(
-        //             context: context,
-        //             builder: (_) => AlertDialog(
-        //               title: const Text('New folder'),
-        //               content: TextField(
-        //                 controller: controller,
-        //                 autofocus: true,
-        //                 decoration: const InputDecoration(
-        //                   hintText: 'Folder name',
-        //                 ),
-        //               ),
-        //               actions: [
-        //                 TextButton(
-        //                   onPressed: () => Navigator.pop(context),
-        //                   child: const Text('Cancel'),
-        //                 ),
-        //                 ElevatedButton(
-        //                   onPressed: () =>
-        //                       Navigator.pop(context, controller.text),
-        //                   child: const Text('Create'),
-        //                 ),
-        //               ],
-        //             ),
-        //           );
-        //           if (name != null) {
-        //             await vm.createFolder(name, parentFolderId: null);
-        //           }
-        //         },
-        //         icon: const Icon(Icons.create_new_folder_outlined),
-        //         label: const Text('New folder'),
-        //       ),
-        //   ],
-        // ),
-        // const SizedBox(height: 16),
         Expanded(
           child: ListView(
             children: [
@@ -215,6 +210,104 @@ class _LibraryContent extends StatelessWidget {
             ],
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _RecentContent extends StatelessWidget {
+  const _RecentContent();
+
+  @override
+  Widget build(BuildContext context) {
+    final main = context.watch<MainViewModel>();
+    final papers = (main.recentPapers ?? const <Paper>[]);
+    final blogs = (main.recentBlogs ?? const <BlogPostSummary>[]);
+
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            '최근 본 논문',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ),
+        if (papers.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Text('없음', style: Theme.of(context).textTheme.bodySmall),
+          )
+        else
+          ...papers.map(
+            (p) => ListTile(
+              dense: true,
+              contentPadding: const EdgeInsets.only(right: 8),
+              leading: const Icon(Icons.article_outlined, size: 18),
+              title: Text(
+                p.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              subtitle: (p.authors != null && p.authors!.isNotEmpty)
+                  ? Text(
+                      p.authors!.join(', '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  : null,
+              onTap: () =>
+                  Navigator.of(context).pushNamed('/paper', arguments: p.id),
+            ),
+          ),
+        const Divider(height: 32),
+
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            '최근 본 블로그 포스트',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ),
+        if (blogs.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Text('없음', style: Theme.of(context).textTheme.bodySmall),
+          )
+        else
+          ...blogs.map(
+            (b) => ListTile(
+              dense: true,
+              contentPadding: const EdgeInsets.only(right: 8),
+              leading: const Icon(Icons.article_outlined, size: 18),
+              title: Text(
+                b.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              subtitle: (b.source?.isNotEmpty ?? false)
+                  ? Text(
+                      b.source!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    )
+                  : null,
+              onTap: () =>
+                  Navigator.of(context).pushNamed('/blog', arguments: b.url),
+            ),
+          ),
       ],
     );
   }

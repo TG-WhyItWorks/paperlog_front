@@ -8,6 +8,26 @@ class MainViewModel extends ChangeNotifier {
   List<Paper> recommendPapers = [];
   List<Folder> folders = [];
 
+  List<Paper> recentPapers = <Paper>[];
+  List<BlogPostSummary> recentBlogs = <BlogPostSummary>[];
+
+  void viewedPaper(Paper p) {
+    _pushUnique<Paper>(recentPapers, p, (x) => x.id ?? '');
+    notifyListeners();
+  }
+
+  void viewedBlog(BlogPostSummary b) {
+    _pushUnique<BlogPostSummary>(recentBlogs, b, (x) => x.url);
+    notifyListeners();
+  }
+
+  void _pushUnique<T>(List<T> list, T item, String Function(T) keyOf) {
+    final k = keyOf(item);
+    list.removeWhere((e) => keyOf(e) == k);
+    list.insert(0, item);
+    if (list.length > 20) list.removeLast();
+  }
+
   /// 사이드바 열림 상태
   bool isSidebarOpen = true;
 
@@ -58,4 +78,12 @@ class MainViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+}
+
+// 간단한 블로그 요약 VO (필요하면 본인 모델로 교체)
+class BlogPostSummary {
+  final String title;
+  final String url;
+  final String? source; // 도메인/블로그명 등
+  BlogPostSummary({required this.title, required this.url, this.source});
 }

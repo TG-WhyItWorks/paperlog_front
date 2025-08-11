@@ -5,6 +5,7 @@ import '../../../core/models/library_models.dart';
 import '../../library/viewmodel/library_viewmodel.dart';
 import '../../auth/viewmodel/auth_viewmodel.dart';
 import 'dart:math' as math;
+import '../../../core/models/paper_model.dart';
 
 class SidebarWidget extends StatefulWidget {
   const SidebarWidget({Key? key}) : super(key: key);
@@ -157,6 +158,57 @@ class _SideBarWidgetState extends State<SidebarWidget> {
                         // 사용자 폴더
                         if (auth.isLoggedIn)
                           ..._buildFolderTreeSidebar(context, lib),
+
+                        // Recent View
+                        const Divider(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Recent View',
+                              style: Theme.of(context).textTheme.titleLarge!
+                                  .copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed(
+                                  '/library',
+                                  arguments: {'initialTab': 1},
+                                );
+                              },
+                              child: const Text('View all'),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        if ((main.recentPapers?.isNotEmpty ?? false)) ...[
+                          Text(
+                            '최근 본 논문',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 8),
+                          ...main.recentPapers!
+                              .take(3)
+                              .map((p) => _recentPaperTile(context, p))
+                              .toList(),
+                          const SizedBox(height: 12),
+                        ],
+                        if ((main.recentBlogs?.isNotEmpty ?? false)) ...[
+                          Text(
+                            '최근 본 블로그 포스트',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 8),
+                          ...main.recentBlogs!
+                              .take(3)
+                              .map((b) => _recentBlogTile(context, b))
+                              .toList(),
+                          const SizedBox(height: 12),
+                        ],
                       ],
                     ),
                   ),
@@ -250,6 +302,55 @@ class _SideBarWidgetState extends State<SidebarWidget> {
 
     // 루트(parentId == null)부터 그리기
     return buildBranch(null);
+  }
+
+  Widget _recentPaperTile(BuildContext context, Paper p) {
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.article_outlined, size: 18),
+      title: Text(
+        p.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+      ),
+      subtitle: (p.authors != null && p.authors!.isNotEmpty)
+          ? Text(
+              p.authors!.join(', '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            )
+          : null,
+      onTap: () => Navigator.of(context).pushNamed('/paper', arguments: p.id),
+    );
+  }
+
+  Widget _recentBlogTile(BuildContext context, BlogPostSummary b) {
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.article_outlined, size: 18),
+      title: Text(
+        b.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+      ),
+      subtitle: (b.source?.isNotEmpty ?? false)
+          ? Text(
+              b.source!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            )
+          : null,
+      onTap: () => Navigator.of(context).pushNamed('/blog', arguments: b.url),
+    );
   }
 }
 

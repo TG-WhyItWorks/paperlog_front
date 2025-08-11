@@ -76,9 +76,7 @@ class PaperLogApp extends StatelessWidget {
           );
         },
         '/library': (context) {
-          final initial =
-              ModalRoute.of(context)!.settings.arguments as LibrarySection?;
-          return LibraryPage(initialSection: initial);
+          return LibraryPage();
         },
         //'/login': (context) => LoginPage(),
         //'/settings': (context) => SettingsPage(),
