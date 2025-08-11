@@ -38,6 +38,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final authVm = context.watch<AuthViewModel>();
+    final vm = context.watch<MainViewModel>();
 
     // ✅ 로그인 성공 시 한 번만 화면 전환
     if (authVm.status == AuthStatus.authenticated && !_navigated) {
@@ -58,11 +59,20 @@ class _LoginPageState extends State<LoginPage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (context.watch<MainViewModel>().isSidebarOpen) SidebarWidget(),
-            VerticalDivider(
+            //   if (context.watch<MainViewModel>().isSidebarOpen) SidebarWidget(),
+            //   VerticalDivider(
+            //     width: 1,
+            //     thickness: 1,
+            //     color: Theme.of(context).dividerColor,
+            //   ),
+            const SidebarWidget(),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 280),
+              curve: Curves.easeInOutCubic,
               width: 1,
-              thickness: 1,
-              color: Theme.of(context).dividerColor,
+              color: vm.isSidebarOpen
+                  ? Theme.of(context).dividerColor
+                  : Colors.transparent,
             ),
             Expanded(
               child: Center(

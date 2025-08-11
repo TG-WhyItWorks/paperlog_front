@@ -33,12 +33,14 @@ class ProfilePage extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (context.watch<MainViewModel>().isSidebarOpen)
-                    SidebarWidget(),
-                  VerticalDivider(
+                  const SidebarWidget(),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 280),
+                    curve: Curves.easeInOutCubic,
                     width: 1,
-                    thickness: 1,
-                    color: Theme.of(context).dividerColor,
+                    color: context.watch<MainViewModel>().isSidebarOpen
+                        ? Theme.of(context).dividerColor
+                        : Colors.transparent,
                   ),
                   Expanded(
                     child: SingleChildScrollView(
@@ -100,13 +102,6 @@ class ProfilePage extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 16),
                                   ],
-
-                                  // OutlinedButton(
-                                  //   onPressed: () =>
-                                  //       _showEditBioDialog(context, vm),
-                                  //   child: const Text('프로필 수정'),
-                                  // ),
-                                  // const SizedBox(height: 16),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -149,7 +144,7 @@ class ProfilePage extends StatelessWidget {
                                       ),
                                     ),
                                     child: const Padding(
-                                      padding: EdgeInsetsGeometry.symmetric(
+                                      padding: EdgeInsets.symmetric(
                                         horizontal: 16,
                                         vertical: 8,
                                       ),

@@ -15,21 +15,6 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  late final MainViewModel vm;
-
-  @override
-  void initState() {
-    super.initState();
-    vm = MainViewModel();
-    vm.addListener(() => setState(() {}));
-  }
-
-  @override
-  void dispose() {
-    vm.removeListener(() {});
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<MainViewModel>();
@@ -46,11 +31,14 @@ class _MainScreenState extends State<MainScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (vm.isSidebarOpen) SidebarWidget(),
-                VerticalDivider(
+                const SidebarWidget(),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeInOutCubic,
                   width: 1,
-                  thickness: 1,
-                  color: Theme.of(context).dividerColor,
+                  color: vm.isSidebarOpen
+                      ? Theme.of(context).dividerColor
+                      : Colors.transparent,
                 ),
                 Expanded(
                   child: Padding(

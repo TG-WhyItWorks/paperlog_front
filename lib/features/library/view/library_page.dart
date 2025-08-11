@@ -14,6 +14,7 @@ class LibraryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final main = context.watch<MainViewModel>();
     final vm = context.watch<LibraryViewModel>();
     final auth = context.watch<AuthViewModel>();
     vm.bindAuth(auth);
@@ -27,12 +28,14 @@ class LibraryPage extends StatelessWidget {
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (context.watch<MainViewModel>().isSidebarOpen)
-            const SidebarWidget(),
-          VerticalDivider(
+          const SidebarWidget(),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeInOutCubic,
             width: 1,
-            thickness: 1,
-            color: Theme.of(context).dividerColor,
+            color: main.isSidebarOpen
+                ? Theme.of(context).dividerColor
+                : Colors.transparent,
           ),
           Expanded(
             child: Padding(

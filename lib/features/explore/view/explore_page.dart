@@ -36,6 +36,7 @@ class _ExplorePageState extends State<ExplorePage> {
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<MainViewModel>();
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: PreferredSize(
@@ -47,11 +48,14 @@ class _ExplorePageState extends State<ExplorePage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (context.watch<MainViewModel>().isSidebarOpen) SidebarWidget(),
-            VerticalDivider(
+            const SidebarWidget(),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 280),
+              curve: Curves.easeInOutCubic,
               width: 1,
-              thickness: 1,
-              color: Theme.of(context).dividerColor,
+              color: vm.isSidebarOpen
+                  ? Theme.of(context).dividerColor
+                  : Colors.transparent,
             ),
             Expanded(
               child: Column(
