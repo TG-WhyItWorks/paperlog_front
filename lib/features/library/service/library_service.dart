@@ -1,19 +1,65 @@
-import '../../../core/models/paper_model.dart';
+import 'package:paperlog_front/core/models/paper_model.dart';
 import '../../../core/models/library_models.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-// class LibraryService {
-//   Future<List<LibraryItem>> fetchLibrary() async {
-//     //TODO: 서버 연동시 교체
-//     final samples = Paper.sampleList();
-//     return [
-//       LibraryItem(paper: samples[0], section: LibrarySection.wantToRead),
-//       LibraryItem(paper: samples[1], section: LibrarySection.reading),
-//       LibraryItem(paper: samples[2], section: LibrarySection.completed),
-//       LibraryItem(
-//         paper: samples[0].copyWith(id: 'pvt-1'),
-//         section: LibrarySection.private,
-//         isPrivate: true,
-//       ),
-//     ];
-//   }
-// }
+class LibraryService {
+  // dart-define으로 주입: flutter run -d chrome --dart-define=API_URL=https://xxxx.ngrok-free.app
+  static const _baseUrl = String.fromEnvironment(
+    'API_URL',
+    defaultValue: 'http://localhost:8000',
+  );
+
+  Future<List<LibraryItem>> fetchLibrary() async {
+    final uri = Uri.parse('$_baseUrl/library'); // FastAPI: GET /library
+    try {
+      final res = await http.get(uri);
+      if (res.statusCode == 200) {
+        final List data = json.decode(res.body) as List;
+        return data.map<LibraryItem>((e) {
+          final sectionStr = (e['section'] ?? '').toString();
+          final paperJson = (e['paper'] as Map).cast<String, dynamic>();
+          return LibraryItem(
+            paper: Paper.fromJson(paperJson),
+            section: _parseSection(sectionStr),
+            isPrivate: (e['is_private'] == true),
+          );
+        }).toList();
+      }
+      // 실패하면 샘플로 폴백
+      return _fallbackSamples();
+    } catch (_) {
+      return _fallbackSamples();
+    }
+  }
+
+  LibrarySection _parseSection(String s) {
+    switch (s) {
+      case 'wantToRead':
+        return LibrarySection.wantToRead;
+      case 'reading':
+        return LibrarySection.reading;
+      case 'completed':
+        return LibrarySection.completed;
+      case 'myPublications':
+        return LibrarySection.myPublications;
+      case 'private':
+      default:
+        return LibrarySection.private;
+    }
+  }
+
+  List<LibraryItem> _fallbackSamples() {
+    final samples = Paper.sampleList();
+    return [
+      LibraryItem(paper: samples[0], section: LibrarySection.wantToRead),
+      LibraryItem(paper: samples[1], section: LibrarySection.reading),
+      LibraryItem(paper: samples[2], section: LibrarySection.completed),
+      LibraryItem(
+        paper: samples[0].copyWith(id: 'pvt-1'),
+        section: LibrarySection.private,
+        isPrivate: true,
+      ),
+    ];
+  }
+}

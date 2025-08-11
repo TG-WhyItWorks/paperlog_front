@@ -12,6 +12,8 @@ import 'features/dashboard/viewmodel/notification_viewmodel.dart';
 import 'features/auth/viewmodel/auth_viewmodel.dart';
 import 'features/dashboard/viewmodel/dashboard_viewmodel.dart';
 import 'features/profile/view/profile_page.dart';
+import 'features/library/view/library_page.dart';
+import 'features/library/viewmodel/library_viewmodel.dart';
 //import 'features/auth/view/login_page.dart';
 //import 'features/settings/view/settings_page.dart';
 
@@ -71,7 +73,10 @@ class PaperLogApp extends StatelessWidget {
             child: PaperDetailPage(paperId: paperId),
           );
         },
-        //'/library': (_) => LibraryPage(),
+        '/library': (context) => ChangeNotifierProvider(
+          create: (_) => LibraryViewModel()..init(), // 데이터 로드
+          child: const LibraryPage(),
+        ),
         //'/login': (context) => LoginPage(),
         //'/settings': (context) => SettingsPage(),
       },

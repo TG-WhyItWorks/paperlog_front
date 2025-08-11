@@ -32,20 +32,37 @@ class Paper {
     this.isLiked,
   });
 
-  // Paper copyWith({
-  //   String? id,
-  //   String? title,
-  //   String? summary,
-  //   List<String>? tags,
-  //   String? recommendationReason,
-  //   String? imageUrl,
-  // }) {
-  //   return Paper(
-  //     id: id ?? this.id,
-  //     title: title ?? this.title,
-
-  //   );
-  // }
+  Paper copyWith({
+    String? id,
+    String? title,
+    List<String>? authors,
+    String? year,
+    List<String>? fields,
+    String? pdfUrl,
+    String? abstractText,
+    String? translatedAbstract,
+    String? blogSummary,
+    List<dynamic>? relatedBlogs,
+    String? doi,
+    int? likeCount,
+    bool? isLiked,
+  }) {
+    return Paper(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      authors: authors ?? List<String>.from(this.authors),
+      year: year ?? this.year,
+      fields: fields ?? List<String>.from(this.fields),
+      pdfUrl: pdfUrl ?? this.pdfUrl,
+      abstractText: abstractText ?? this.abstractText,
+      translatedAbstract: translatedAbstract ?? this.translatedAbstract,
+      blogSummary: blogSummary ?? this.blogSummary,
+      relatedBlogs: relatedBlogs ?? List<dynamic>.from(this.relatedBlogs),
+      doi: doi ?? this.doi,
+      likeCount: likeCount ?? this.likeCount,
+      isLiked: isLiked ?? this.isLiked,
+    );
+  }
 
   // JSON 변환 메소드
   factory Paper.fromJson(Map<String, dynamic> json) {
