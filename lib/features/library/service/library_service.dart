@@ -2,6 +2,9 @@ import 'package:paperlog_front/core/models/paper_model.dart';
 import '../../../core/models/library_models.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:typed_data';
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 
 class LibraryService {
   // dart-define으로 주입: flutter run -d chrome --dart-define=API_URL=https://daf1d4db1de5.ngrok-free.app
@@ -61,5 +64,36 @@ class LibraryService {
         isPrivate: true,
       ),
     ];
+  }
+
+  /// Private PDF 업로드 (FastAPI: POST /private-papers/upload)
+  Future<Paper> uploadPrivatePdf({
+    required String filename,
+    required Uint8List bytes,
+    Map<String, String>? fields,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/private-papers/upload');
+    final req = http.MultipartRequest('POST', uri);
+    if (fields != null) req.fields.addAll(fields);
+
+    //final mime = lookupMimeType(filename) ?? 'application/pdf';
+    //final parts = mime.split('/');
+
+    req.files.add(
+      http.MultipartFile.fromBytes(
+        'file',
+        bytes,
+        filename: filename,
+        //contentType: MediaType(parts.first, parts.last),
+      ),
+    );
+
+    final streamed = await req.send();
+    final res = await http.Response.fromStream(streamed);
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      throw Exception('업로드 실패: HTTP ${res.statusCode}');
+    }
+    final map = json.decode(res.body) as Map<String, dynamic>;
+    return Paper.fromJson(map);
   }
 }

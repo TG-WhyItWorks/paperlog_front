@@ -87,9 +87,8 @@ class _LibraryContent extends StatelessWidget {
           runSpacing: 8,
           children: [
             OutlinedButton.icon(
-              onPressed: () {
-                /* TODO: 파일 업로드 */
-              },
+              onPressed: () =>
+                  context.read<LibraryViewModel>().uploadPrivatePaper(context),
               icon: const Icon(Icons.upload_file),
               label: const Text('Upload Private Paper'),
             ),
