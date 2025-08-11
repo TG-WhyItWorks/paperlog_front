@@ -1,13 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/dashboard_viewmodel.dart';
+import '../../../core/models/library_models.dart';
+import '../../library/viewmodel/library_viewmodel.dart';
 
 class SidebarWidget extends StatelessWidget {
   const SidebarWidget({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<MainViewModel>();
+    final mian = context.watch<MainViewModel>();
+    final lib = context.watch<LibraryViewModel>();
+
+    Widget _libItem(String title, LibrarySection s) {
+      final count = lib.section(s).length;
+      return ListTile(
+        contentPadding: EdgeInsets.zero,
+        dense: true,
+        title: Text(title, style: Theme.of(context).textTheme.bodyLarge),
+        trailing: Text('$count', style: Theme.of(context).textTheme.bodyMedium),
+        onTap: () {
+          // 라이브러리 페이지로 이동 (선택한 섹션 전달)
+          Navigator.of(context).pushNamed('/library', arguments: s);
+        },
+      );
+    }
+
     return Container(
       width: 320,
       color: Theme.of(context).colorScheme.surface,
@@ -23,20 +41,11 @@ class SidebarWidget extends StatelessWidget {
               ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            ...viewModel.folders.map(
-              (folder) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  folder.name,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                trailing: Text(
-                  '${folder.paperCount}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                onTap: () => viewModel.selectFolder(folder),
-              ),
-            ),
+            _libItem('Want to read', LibrarySection.wantToRead),
+            _libItem('Reading', LibrarySection.reading),
+            _libItem('Completed', LibrarySection.completed),
+            _libItem('My publications', LibrarySection.myPublications),
+            _libItem('Private Papers', LibrarySection.private),
             const Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

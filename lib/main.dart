@@ -14,6 +14,7 @@ import 'features/dashboard/viewmodel/dashboard_viewmodel.dart';
 import 'features/profile/view/profile_page.dart';
 import 'features/library/view/library_page.dart';
 import 'features/library/viewmodel/library_viewmodel.dart';
+import 'core/models/library_models.dart';
 //import 'features/auth/view/login_page.dart';
 //import 'features/settings/view/settings_page.dart';
 
@@ -26,6 +27,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => NotificationViewModel()),
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => MainViewModel()),
+        ChangeNotifierProvider(create: (_) => LibraryViewModel()..init()),
       ],
       child: const PaperLogApp(),
     ),
@@ -73,10 +75,11 @@ class PaperLogApp extends StatelessWidget {
             child: PaperDetailPage(paperId: paperId),
           );
         },
-        '/library': (context) => ChangeNotifierProvider(
-          create: (_) => LibraryViewModel()..init(), // 데이터 로드
-          child: const LibraryPage(),
-        ),
+        '/library': (context) {
+          final initial =
+              ModalRoute.of(context)!.settings.arguments as LibrarySection?;
+          return LibraryPage(initialSection: initial);
+        },
         //'/login': (context) => LoginPage(),
         //'/settings': (context) => SettingsPage(),
       },

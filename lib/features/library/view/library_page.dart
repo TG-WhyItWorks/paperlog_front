@@ -7,7 +7,8 @@ import '../viewmodel/library_viewmodel.dart';
 import '../../../core/models/library_models.dart';
 
 class LibraryPage extends StatelessWidget {
-  const LibraryPage({Key? key}) : super(key: key);
+  final LibrarySection? initialSection;
+  const LibraryPage({Key? key, this.initialSection}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +48,9 @@ class LibraryPage extends StatelessWidget {
 
 class _LibraryContent extends StatelessWidget {
   final LibraryViewModel vm;
-  const _LibraryContent({required this.vm});
+  final LibrarySection? initialSection;
+  const _LibraryContent({required this.vm, this.initialSection});
+  bool _isInit(LibrarySection s) => initialSection == s;
 
   @override
   Widget build(BuildContext context) {
@@ -130,22 +133,27 @@ class _LibraryContent extends StatelessWidget {
               _SectionTile(
                 title: 'Want to read',
                 items: vm.section(LibrarySection.wantToRead),
+                initiallyExpanded: _isInit(LibrarySection.wantToRead),
               ),
               _SectionTile(
                 title: 'Reading',
                 items: vm.section(LibrarySection.reading),
+                initiallyExpanded: _isInit(LibrarySection.reading),
               ),
               _SectionTile(
                 title: 'Completed',
                 items: vm.section(LibrarySection.completed),
+                initiallyExpanded: _isInit(LibrarySection.completed),
               ),
               _SectionTile(
                 title: 'My publications',
                 items: vm.section(LibrarySection.myPublications),
+                initiallyExpanded: _isInit(LibrarySection.myPublications),
               ),
               _SectionTile(
                 title: 'Private Papers',
                 items: vm.section(LibrarySection.private),
+                initiallyExpanded: _isInit(LibrarySection.private),
               ),
             ],
           ),
@@ -158,13 +166,19 @@ class _LibraryContent extends StatelessWidget {
 class _SectionTile extends StatelessWidget {
   final String title;
   final List<LibraryItem> items;
-  const _SectionTile({required this.title, required this.items});
+  final bool initiallyExpanded;
+  const _SectionTile({
+    required this.title,
+    required this.items,
+    this.initiallyExpanded = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
+        initiallyExpanded: initiallyExpanded,
         tilePadding: EdgeInsets.zero,
         childrenPadding: const EdgeInsets.only(left: 8),
         title: Row(
