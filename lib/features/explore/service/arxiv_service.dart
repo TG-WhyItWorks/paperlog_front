@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 
 class ArxivService {
   // 프록시 서버 엔드 포인트
-  static const _host = 'b7b8f1b2cd2c.ngrok-free.app';
+  static const _host = 'daf1d4db1de5.ngrok-free.app';
   static const _path = '/api/arxiv';
 
   Map<String, String> _headers() => const {

@@ -1,3 +1,4 @@
+// lib/features/library/view/library_page.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:paperlog_front/features/dashboard/widgets/header_widget.dart';
@@ -37,7 +38,7 @@ class LibraryPage extends StatelessWidget {
                   ? const Center(child: CircularProgressIndicator())
                   : vm.error != null
                   ? Center(child: Text('로드 실패: ${vm.error}'))
-                  : _LibraryContent(vm: vm),
+                  : _LibraryContent(vm: vm, initialSection: initialSection),
             ),
           ),
         ],
@@ -50,6 +51,7 @@ class _LibraryContent extends StatelessWidget {
   final LibraryViewModel vm;
   final LibrarySection? initialSection;
   const _LibraryContent({required this.vm, this.initialSection});
+
   bool _isInit(LibrarySection s) => initialSection == s;
 
   @override
@@ -59,31 +61,7 @@ class _LibraryContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 상단 탭 (Papers | Private Notes | Conversations)
-        DefaultTabController(
-          length: 3,
-          child: Column(
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TabBar(
-                  isScrollable: true,
-                  labelColor: Theme.of(context).colorScheme.primary,
-                  unselectedLabelColor: text.bodyMedium?.color,
-                  dividerColor: Theme.of(context).dividerColor,
-                  tabs: const [
-                    Tab(text: 'Papers'),
-                    Tab(text: 'Private Notes'),
-                    Tab(text: 'Conversations'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        ),
-
-        // 검색바
+        // 검색
         SizedBox(
           height: 44,
           child: TextField(
@@ -103,7 +81,7 @@ class _LibraryContent extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // 액션 버튼
+        // 액션
         Wrap(
           spacing: 12,
           runSpacing: 8,
@@ -116,8 +94,33 @@ class _LibraryContent extends StatelessWidget {
               label: const Text('Upload Private Paper'),
             ),
             OutlinedButton.icon(
-              onPressed: () {
-                /* TODO: 폴더 생성 */
+              onPressed: () async {
+                final controller = TextEditingController();
+                final name = await showDialog<String>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('New folder'),
+                    content: TextField(
+                      controller: controller,
+                      autofocus: true,
+                      decoration: const InputDecoration(
+                        hintText: 'Folder name',
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () =>
+                            Navigator.pop(context, controller.text),
+                        child: const Text('Create'),
+                      ),
+                    ],
+                  ),
+                );
+                if (name != null) vm.createFolder(name);
               },
               icon: const Icon(Icons.create_new_folder_outlined),
               label: const Text('New folder'),
@@ -126,10 +129,19 @@ class _LibraryContent extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // 섹션들
         Expanded(
           child: ListView(
             children: [
+              // ===== Quick Lists =====
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'Quick Lists',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ),
               _SectionTile(
                 title: 'Want to read',
                 items: vm.section(LibrarySection.wantToRead),
@@ -145,15 +157,51 @@ class _LibraryContent extends StatelessWidget {
                 items: vm.section(LibrarySection.completed),
                 initiallyExpanded: _isInit(LibrarySection.completed),
               ),
-              _SectionTile(
-                title: 'My publications',
-                items: vm.section(LibrarySection.myPublications),
-                initiallyExpanded: _isInit(LibrarySection.myPublications),
+
+              const Divider(height: 32),
+
+              // ===== My Collections =====
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'My Collections',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
+                ),
               ),
-              _SectionTile(
+              _CollectionTile(
+                title: 'My publications',
+                count: vm.section(LibrarySection.myPublications).length,
+                initiallyExpanded: _isInit(LibrarySection.myPublications),
+                children: vm
+                    .section(LibrarySection.myPublications)
+                    .map<Widget>((e) => _PaperRow(item: e))
+                    .toList(),
+              ),
+              _CollectionTile(
                 title: 'Private Papers',
-                items: vm.section(LibrarySection.private),
+                count: vm.section(LibrarySection.private).length,
                 initiallyExpanded: _isInit(LibrarySection.private),
+                children: vm
+                    .section(LibrarySection.private)
+                    .map<Widget>((e) => _PaperRow(item: e))
+                    .toList(),
+              ),
+              // 사용자 폴더도 Expandable
+              ...vm.folders.map(
+                (f) => _CollectionTile(
+                  title: f.name,
+                  count: f.count,
+                  initiallyExpanded: false,
+                  children: const [
+                    // TODO: 폴더별 논문 연결 시 여기 children 채우기
+                    Padding(
+                      padding: EdgeInsets.only(left: 8, bottom: 12),
+                      child: Text('없음'),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -219,9 +267,9 @@ class _PaperRow extends StatelessWidget {
         children: [
           Expanded(
             child: InkWell(
-              onTap: () {
-                Navigator.of(context).pushNamed('/paper', arguments: paper.id);
-              },
+              onTap: () => Navigator.of(
+                context,
+              ).pushNamed('/paper', arguments: paper.id),
               child: Text(
                 paper.title,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -257,9 +305,7 @@ class _PaperRow extends StatelessWidget {
       ),
       trailing: IconButton(
         icon: const Icon(Icons.more_horiz),
-        onPressed: () {
-          /* TODO: more menu */
-        },
+        onPressed: () {},
       ),
     );
   }
@@ -268,7 +314,6 @@ class _PaperRow extends StatelessWidget {
 class _CountChip extends StatelessWidget {
   final int count;
   const _CountChip({required this.count});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -278,6 +323,55 @@ class _CountChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text('$count', style: Theme.of(context).textTheme.labelSmall),
+    );
+  }
+}
+
+/// My Collections(가상/사용자 폴더) 확장용 타일
+class _CollectionTile extends StatelessWidget {
+  final String title;
+  final int count;
+  final bool initiallyExpanded;
+  final List<Widget> children;
+  const _CollectionTile({
+    required this.title,
+    required this.count,
+    this.initiallyExpanded = false,
+    this.children = const [],
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        initiallyExpanded: initiallyExpanded,
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(left: 8),
+        leading: Icon(
+          Icons.folder_outlined,
+          size: 18,
+          color: Theme.of(context).iconTheme.color,
+        ),
+        title: Row(
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(width: 8),
+            _CountChip(count: count),
+          ],
+        ),
+        children: children.isEmpty
+            ? [
+                Padding(
+                  padding: const EdgeInsets.only(left: 8, bottom: 12),
+                  child: Text(
+                    '없음',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ]
+            : children,
+      ),
     );
   }
 }

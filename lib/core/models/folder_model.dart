@@ -24,8 +24,13 @@ class Folder {
   static List<Folder> customFoldersSample() {
     return [
       Folder(id: 'cs', name: 'Computer Science'),
-      Folder(id: 'cs_dl', name: 'Deep Learning',parentId: 'cs', paperCount: 5),
-      Folder(id: 'cs_dl_attn', name: 'Attention is All You Need',parentId: 'cs_dl', paperCount: 1,),
+      Folder(id: 'cs_dl', name: 'Deep Learning', parentId: 'cs', paperCount: 5),
+      Folder(
+        id: 'cs_dl_attn',
+        name: 'Attention is All You Need',
+        parentId: 'cs_dl',
+        paperCount: 1,
+      ),
     ];
   }
 }

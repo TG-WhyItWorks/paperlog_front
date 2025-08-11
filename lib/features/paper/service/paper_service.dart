@@ -4,7 +4,7 @@ import '../../../core/models/paper_detail_model.dart';
 import 'package:flutter/foundation.dart';
 
 class PaperService {
-  static const _host = 'b7b8f1b2cd2c.ngrok-free.app';
+  static const _host = 'daf1d4db1de5.ngrok-free.app';
   static const _basePath = '/api/arxiv';
 
   Map<String, String> _headers() => const {

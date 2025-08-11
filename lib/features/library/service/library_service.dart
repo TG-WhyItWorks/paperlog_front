@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class LibraryService {
-  // dart-define으로 주입: flutter run -d chrome --dart-define=API_URL=https://xxxx.ngrok-free.app
+  // dart-define으로 주입: flutter run -d chrome --dart-define=API_URL=https://daf1d4db1de5.ngrok-free.app
   static const _baseUrl = String.fromEnvironment(
     'API_URL',
     defaultValue: 'http://localhost:8000',
