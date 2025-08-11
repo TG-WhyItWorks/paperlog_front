@@ -113,6 +113,82 @@ class LibraryViewModel extends ChangeNotifier {
     }
   }
 
+  /// 선택한 폴더에 업로드
+  Future<void> uploadPrivatePaperToFolder(
+    BuildContext context, {
+    required String folderIdStr,
+  }) async {
+    if (_auth?.isLoggedIn != true) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('로그인 후 이용해 주세요.')));
+      return;
+    }
+    final folderId = int.tryParse(folderIdStr);
+    if (folderId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('잘못된 폴더 ID 입니다.')));
+      return;
+    }
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: false,
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) return;
+      final file = result.files.first;
+      final bytes = file.bytes;
+      if (bytes == null) throw Exception('파일 바이트를 읽지 못했습니다.');
+
+      isLoading = true;
+      error = null;
+      notifyListeners();
+
+      final paper = await _service.uploadPrivatePdf(
+        filename: file.name,
+        bytes: bytes,
+        fields: const {'visibility': 'private'},
+        folderId: folderId, // 폴더 지정 업로드
+      );
+
+      // 라이브러리 리스트에 반영 (private 섹션으로 표기)
+      items = [
+        LibraryItem(
+          paper: paper,
+          section: LibrarySection.private,
+          isPrivate: true,
+        ),
+        ...items,
+      ];
+
+      // 폴더 count +1 반영
+      final uid = _auth!.userId!;
+      final list = [...(_userFolders[uid] ?? const <LibraryFolder>[])];
+      final idx = list.indexWhere((f) => f.id == folderIdStr);
+      if (idx != -1) {
+        final f = list[idx];
+        list[idx] = LibraryFolder(id: f.id, name: f.name, count: f.count + 1);
+        _userFolders[uid] = list;
+        _folders = list;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('업로드 완료')));
+    } catch (e) {
+      error = e.toString();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('업로드 실패: $error')));
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// 파일 선택 → 업로드 → 리스트 반영
   Future<void> uploadPrivatePaper(BuildContext context) async {
     if (_auth?.isLoggedIn != true) {

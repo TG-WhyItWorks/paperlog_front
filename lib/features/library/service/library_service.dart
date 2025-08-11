@@ -97,11 +97,13 @@ class LibraryService {
       throw Exception('폴더 생성 실패: HTTP ${res.statusCode} ${res.body}');
     }
     final map = json.decode(res.body) as Map<String, dynamic>;
-    // 백엔드 폴더 응답에 맞춰 맵핑 (id:int -> String 변환)
     return LibraryFolder(
       id: (map['id'] ?? '').toString(),
       name: (map['folder_name'] ?? '').toString(),
       count: (map['count'] is int) ? map['count'] as int : 0,
+      parentId: (map['parent_folder_id'] != null)
+          ? (map['parent_folder_id']).toString()
+          : null,
     );
   }
 
@@ -110,6 +112,7 @@ class LibraryService {
     required String filename,
     required Uint8List bytes,
     Map<String, String>? fields,
+    int? folderId,
   }) async {
     final uri = Uri.parse('$_baseUrl/private-papers/upload');
     final req = http.MultipartRequest('POST', uri);
@@ -119,6 +122,10 @@ class LibraryService {
     req.headers['ngrok-skip-browser-warning'] = 'true';
     if (at != null && at.isNotEmpty) {
       req.headers['Authorization'] = 'Bearer $at';
+    }
+    if (folderId != null) {
+      // 백엔드가 기대하는 키에 맞춰 전달 (예: folder_id)
+      req.fields['folder_id'] = folderId.toString();
     }
 
     //final mime = lookupMimeType(filename) ?? 'application/pdf';

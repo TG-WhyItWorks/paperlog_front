@@ -44,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
       _navigated = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        Navigator.of(context).pushReplacementNamed('/'); // 목적지 라우트 확인
+        Navigator.of(context).pushReplacementNamed('/');
       });
     }
     return Scaffold(
@@ -72,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Sign in to PaperLog 5',
+                        'Sign in to PaperLog',
                         style: Theme.of(context).textTheme.displaySmall,
                       ),
                       const SizedBox(height: 32),

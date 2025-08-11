@@ -199,20 +199,7 @@ class _LibraryContent extends StatelessWidget {
                       .toList(),
                 ),
               // 사용자 폴더도 Expandable
-              ...vm.folders.map(
-                (f) => _CollectionTile(
-                  title: f.name,
-                  count: f.count,
-                  initiallyExpanded: false,
-                  children: const [
-                    // TODO: 폴더별 논문 연결 시 여기 children 채우기
-                    Padding(
-                      padding: EdgeInsets.only(left: 8, bottom: 12),
-                      child: Text('없음'),
-                    ),
-                  ],
-                ),
-              ),
+              ..._buildFolderTree(context, vm),
             ],
           ),
         ),
@@ -238,7 +225,7 @@ class _SectionTile extends StatelessWidget {
       child: ExpansionTile(
         initiallyExpanded: initiallyExpanded,
         tilePadding: EdgeInsets.zero,
-        childrenPadding: const EdgeInsets.only(left: 8),
+        childrenPadding: const EdgeInsets.only(left: 24), //들여쓰기 조절
         title: Row(
           children: [
             Text(title, style: Theme.of(context).textTheme.titleMedium),
@@ -260,6 +247,43 @@ class _SectionTile extends StatelessWidget {
       ),
     );
   }
+}
+
+List<Widget> _buildFolderTree(BuildContext context, LibraryViewModel vm) {
+  final all = vm.folders;
+  if (all.isEmpty) {
+    return const [
+      Padding(padding: EdgeInsets.only(left: 8, bottom: 12), child: Text('없음')),
+    ];
+  }
+  // parentId -> children 매핑
+  final Map<String?, List<LibraryFolder>> byParent = {};
+  for (final f in all) {
+    byParent.putIfAbsent(f.parentId, () => <LibraryFolder>[]).add(f);
+  }
+  // 루트부터 재귀적으로 그리기
+  List<Widget> buildBranch(String? parentId) {
+    final children = byParent[parentId] ?? const <LibraryFolder>[];
+    return children.map((f) {
+      final grandChildren = buildBranch(f.id);
+      return _CollectionTile(
+        title: f.name,
+        count: f.count,
+        initiallyExpanded: false,
+        onAdd: () => _showFolderActions(context, vm, f.id),
+        children: grandChildren.isEmpty
+            ? const [
+                Padding(
+                  padding: EdgeInsets.only(left: 8, bottom: 12),
+                  child: Text('없음'),
+                ),
+              ]
+            : grandChildren,
+      );
+    }).toList();
+  }
+
+  return buildBranch(null);
 }
 
 class _PaperRow extends StatelessWidget {
@@ -343,11 +367,13 @@ class _CollectionTile extends StatelessWidget {
   final int count;
   final bool initiallyExpanded;
   final List<Widget> children;
+  final VoidCallback? onAdd;
   const _CollectionTile({
     required this.title,
     required this.count,
     this.initiallyExpanded = false,
     this.children = const [],
+    this.onAdd,
   });
 
   @override
@@ -365,9 +391,21 @@ class _CollectionTile extends StatelessWidget {
         ),
         title: Row(
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(width: 8),
-            _CountChip(count: count),
+            Expanded(
+              child: Row(
+                children: [
+                  Text(title, style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(width: 8),
+                  _CountChip(count: count),
+                ],
+              ),
+            ),
+            if (onAdd != null)
+              IconButton(
+                tooltip: 'Add to folder',
+                icon: const Icon(Icons.add, size: 18),
+                onPressed: onAdd,
+              ),
           ],
         ),
         children: children.isEmpty
@@ -384,4 +422,67 @@ class _CollectionTile extends StatelessWidget {
       ),
     );
   }
+}
+
+// 폴더 액션: Upload / New Folder
+void _showFolderActions(
+  BuildContext context,
+  LibraryViewModel vm,
+  String folderId,
+) {
+  showModalBottomSheet(
+    context: context,
+    showDragHandle: true,
+    builder: (_) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.upload_file),
+            title: const Text('Upload to this folder'),
+            onTap: () async {
+              Navigator.pop(context);
+              await vm.uploadPrivatePaperToFolder(
+                context,
+                folderIdStr: folderId,
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.create_new_folder_outlined),
+            title: const Text('Create subfolder'),
+            onTap: () async {
+              Navigator.pop(context);
+              final controller = TextEditingController();
+              final name = await showDialog<String>(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: const Text('New subfolder'),
+                  content: TextField(
+                    controller: controller,
+                    autofocus: true,
+                    decoration: const InputDecoration(hintText: 'Folder name'),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, controller.text),
+                      child: const Text('Create'),
+                    ),
+                  ],
+                ),
+              );
+              if (name != null && name.trim().isNotEmpty) {
+                final parentId = int.tryParse(folderId);
+                await vm.createFolder(name.trim(), parentFolderId: parentId);
+              }
+            },
+          ),
+        ],
+      ),
+    ),
+  );
 }

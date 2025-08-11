@@ -19,8 +19,14 @@ class LibraryFolder {
   final String id;
   final String name;
   final int count; // 서버 연동 전까지는 정적/로컬 카운트
+  final String? parentId;
 
-  const LibraryFolder({required this.id, required this.name, this.count = 0});
+  const LibraryFolder({
+    required this.id,
+    required this.name,
+    this.count = 0,
+    this.parentId,
+  });
 
   LibraryFolder copyWith({String? id, String? name, int? count}) {
     return LibraryFolder(
