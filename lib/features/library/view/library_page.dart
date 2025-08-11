@@ -16,7 +16,6 @@ class LibraryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.watch<LibraryViewModel>();
     final auth = context.watch<AuthViewModel>();
-    // Auth 변화 바인딩(최초 1회만 효과, 동일 인스턴스면 조용히 리턴)
     vm.bindAuth(auth);
 
     return Scaffold(
@@ -86,58 +85,57 @@ class _LibraryContent extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // 액션
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          children: [
-            if (auth.isLoggedIn)
-              OutlinedButton.icon(
-                onPressed: () => context
-                    .read<LibraryViewModel>()
-                    .uploadPrivatePaper(context),
-                icon: const Icon(Icons.upload_file),
-                label: const Text('Upload Private Paper'),
-              ),
-            if (auth.isLoggedIn)
-              OutlinedButton.icon(
-                onPressed: () async {
-                  final controller = TextEditingController();
-                  final name = await showDialog<String>(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      title: const Text('New folder'),
-                      content: TextField(
-                        controller: controller,
-                        autofocus: true,
-                        decoration: const InputDecoration(
-                          hintText: 'Folder name',
-                        ),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () =>
-                              Navigator.pop(context, controller.text),
-                          child: const Text('Create'),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (name != null) {
-                    await vm.createFolder(name, parentFolderId: null);
-                  }
-                },
-                icon: const Icon(Icons.create_new_folder_outlined),
-                label: const Text('New folder'),
-              ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
+        // // 액션
+        // Wrap(
+        //   spacing: 12,
+        //   runSpacing: 8,
+        //   children: [
+        //     if (auth.isLoggedIn)
+        //       OutlinedButton.icon(
+        //         onPressed: () => context
+        //             .read<LibraryViewModel>()
+        //             .uploadPrivatePaper(context),
+        //         icon: const Icon(Icons.upload_file),
+        //         label: const Text('Upload Private Paper'),
+        //       ),
+        //     if (auth.isLoggedIn)
+        //       OutlinedButton.icon(
+        //         onPressed: () async {
+        //           final controller = TextEditingController();
+        //           final name = await showDialog<String>(
+        //             context: context,
+        //             builder: (_) => AlertDialog(
+        //               title: const Text('New folder'),
+        //               content: TextField(
+        //                 controller: controller,
+        //                 autofocus: true,
+        //                 decoration: const InputDecoration(
+        //                   hintText: 'Folder name',
+        //                 ),
+        //               ),
+        //               actions: [
+        //                 TextButton(
+        //                   onPressed: () => Navigator.pop(context),
+        //                   child: const Text('Cancel'),
+        //                 ),
+        //                 ElevatedButton(
+        //                   onPressed: () =>
+        //                       Navigator.pop(context, controller.text),
+        //                   child: const Text('Create'),
+        //                 ),
+        //               ],
+        //             ),
+        //           );
+        //           if (name != null) {
+        //             await vm.createFolder(name, parentFolderId: null);
+        //           }
+        //         },
+        //         icon: const Icon(Icons.create_new_folder_outlined),
+        //         label: const Text('New folder'),
+        //       ),
+        //   ],
+        // ),
+        // const SizedBox(height: 16),
         Expanded(
           child: ListView(
             children: [
@@ -170,14 +168,25 @@ class _LibraryContent extends StatelessWidget {
               const Divider(height: 32),
 
               // ===== My Collections =====
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  'My Collections',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      'My Collections',
+                      style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (auth.isLoggedIn)
+                    IconButton(
+                      tooltip: 'Add (upload or new folder)',
+                      icon: const Icon(Icons.add),
+                      onPressed: () => _showCollectionsActions(context, vm),
+                    ),
+                ],
               ),
               _CollectionTile(
                 title: 'My publications',
@@ -251,11 +260,11 @@ class _SectionTile extends StatelessWidget {
 
 List<Widget> _buildFolderTree(BuildContext context, LibraryViewModel vm) {
   final all = vm.folders;
-  if (all.isEmpty) {
-    return const [
-      Padding(padding: EdgeInsets.only(left: 8, bottom: 12), child: Text('없음')),
-    ];
-  }
+  // if (all.isEmpty) {
+  //   return const [
+  //     Padding(padding: EdgeInsets.only(left: 8, bottom: 12), child: Text('없음')),
+  //   ];
+  // }
   // parentId -> children 매핑
   final Map<String?, List<LibraryFolder>> byParent = {};
   for (final f in all) {
@@ -478,6 +487,61 @@ void _showFolderActions(
               if (name != null && name.trim().isNotEmpty) {
                 final parentId = int.tryParse(folderId);
                 await vm.createFolder(name.trim(), parentFolderId: parentId);
+              }
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+// 상단 My Collections + 버튼 액션: Upload / New folder
+void _showCollectionsActions(BuildContext context, LibraryViewModel vm) {
+  showModalBottomSheet(
+    context: context,
+    showDragHandle: true,
+    builder: (_) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.upload_file),
+            title: const Text('Upload Private Paper'),
+            onTap: () async {
+              Navigator.pop(context);
+              await vm.uploadPrivatePaper(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.create_new_folder_outlined),
+            title: const Text('New folder'),
+            onTap: () async {
+              Navigator.pop(context);
+              final controller = TextEditingController();
+              final name = await showDialog<String>(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: const Text('New folder'),
+                  content: TextField(
+                    controller: controller,
+                    autofocus: true,
+                    decoration: const InputDecoration(hintText: 'Folder name'),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, controller.text),
+                      child: const Text('Create'),
+                    ),
+                  ],
+                ),
+              );
+              if (name != null && name.trim().isNotEmpty) {
+                await vm.createFolder(name.trim(), parentFolderId: null);
               }
             },
           ),

@@ -129,16 +129,7 @@ class SidebarWidget extends StatelessWidget {
               ),
 
             // 사용자 폴더
-            if (auth.isLoggedIn)
-              ...lib.folders.map(
-                (f) => _collectionRow(
-                  context,
-                  title: f.name,
-                  count: f.count,
-                  icon: Icons.folder_outlined,
-                  onTap: () => Navigator.of(context).pushNamed('/library'),
-                ),
-              ),
+            if (auth.isLoggedIn) ..._buildFolderTreeSidebar(context, lib),
 
             ///TODO: 블로그 구현
             // const Divider(),
@@ -199,5 +190,75 @@ class SidebarWidget extends StatelessWidget {
       ),
       onTap: onTap,
     );
+  }
+
+  List<Widget> _buildFolderTreeSidebar(
+    BuildContext context,
+    LibraryViewModel vm,
+  ) {
+    final all = vm.folders;
+    // if (all.isEmpty) {
+    //   return const [
+    //     Padding(
+    //       padding: EdgeInsets.only(left: 8, bottom: 12),
+    //       child: Text('없음'),
+    //     ),
+    //   ];
+    // }
+
+    // parentId -> children
+    final Map<String?, List<LibraryFolder>> byParent = {};
+    for (final f in all) {
+      byParent.putIfAbsent(f.parentId, () => <LibraryFolder>[]).add(f);
+    }
+
+    List<Widget> buildBranch(String? parentId) {
+      final children = byParent[parentId] ?? const <LibraryFolder>[];
+      return children.map((f) {
+        final grand = buildBranch(f.id);
+        final title = Row(
+          children: [
+            Expanded(
+              child: Text(f.name, style: Theme.of(context).textTheme.bodyLarge),
+            ),
+            Text('${f.count}', style: Theme.of(context).textTheme.bodyMedium),
+          ],
+        );
+
+        if (grand.isEmpty) {
+          // leaf → ListTile
+          return ListTile(
+            dense: true,
+            contentPadding: const EdgeInsets.only(left: 12),
+            leading: Icon(
+              Icons.folder_outlined,
+              size: 18,
+              color: Theme.of(context).iconTheme.color,
+            ),
+            title: title,
+            onTap: () => Navigator.of(context).pushNamed('/library'),
+          );
+        }
+
+        // has children → ExpansionTile
+        return Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.only(left: 0),
+            childrenPadding: const EdgeInsets.only(left: 16),
+            leading: Icon(
+              Icons.folder_outlined,
+              size: 18,
+              color: Theme.of(context).iconTheme.color,
+            ),
+            title: title,
+            children: grand,
+          ),
+        );
+      }).toList();
+    }
+
+    // 루트(parentId == null)부터 그리기
+    return buildBranch(null);
   }
 }
