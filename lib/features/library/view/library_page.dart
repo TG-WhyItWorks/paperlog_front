@@ -6,6 +6,7 @@ import 'package:paperlog_front/features/dashboard/widgets/sidebar_widget.dart';
 import 'package:paperlog_front/features/dashboard/viewmodel/dashboard_viewmodel.dart';
 import '../viewmodel/library_viewmodel.dart';
 import '../../../core/models/library_models.dart';
+import '../../auth/viewmodel/auth_viewmodel.dart';
 
 class LibraryPage extends StatelessWidget {
   final LibrarySection? initialSection;
@@ -14,6 +15,9 @@ class LibraryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<LibraryViewModel>();
+    final auth = context.watch<AuthViewModel>();
+    // Auth 변화 바인딩(최초 1회만 효과, 동일 인스턴스면 조용히 리턴)
+    vm.bindAuth(auth);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -57,6 +61,7 @@ class _LibraryContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final auth = context.watch<AuthViewModel>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,44 +91,49 @@ class _LibraryContent extends StatelessWidget {
           spacing: 12,
           runSpacing: 8,
           children: [
-            OutlinedButton.icon(
-              onPressed: () =>
-                  context.read<LibraryViewModel>().uploadPrivatePaper(context),
-              icon: const Icon(Icons.upload_file),
-              label: const Text('Upload Private Paper'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () async {
-                final controller = TextEditingController();
-                final name = await showDialog<String>(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    title: const Text('New folder'),
-                    content: TextField(
-                      controller: controller,
-                      autofocus: true,
-                      decoration: const InputDecoration(
-                        hintText: 'Folder name',
+            if (auth.isLoggedIn)
+              OutlinedButton.icon(
+                onPressed: () => context
+                    .read<LibraryViewModel>()
+                    .uploadPrivatePaper(context),
+                icon: const Icon(Icons.upload_file),
+                label: const Text('Upload Private Paper'),
+              ),
+            if (auth.isLoggedIn)
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final controller = TextEditingController();
+                  final name = await showDialog<String>(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text('New folder'),
+                      content: TextField(
+                        controller: controller,
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          hintText: 'Folder name',
+                        ),
                       ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () =>
+                              Navigator.pop(context, controller.text),
+                          child: const Text('Create'),
+                        ),
+                      ],
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () =>
-                            Navigator.pop(context, controller.text),
-                        child: const Text('Create'),
-                      ),
-                    ],
-                  ),
-                );
-                if (name != null) vm.createFolder(name);
-              },
-              icon: const Icon(Icons.create_new_folder_outlined),
-              label: const Text('New folder'),
-            ),
+                  );
+                  if (name != null) {
+                    await vm.createFolder(name, parentFolderId: null);
+                  }
+                },
+                icon: const Icon(Icons.create_new_folder_outlined),
+                label: const Text('New folder'),
+              ),
           ],
         ),
         const SizedBox(height: 16),
@@ -178,15 +188,16 @@ class _LibraryContent extends StatelessWidget {
                     .map<Widget>((e) => _PaperRow(item: e))
                     .toList(),
               ),
-              _CollectionTile(
-                title: 'Private Papers',
-                count: vm.section(LibrarySection.private).length,
-                initiallyExpanded: _isInit(LibrarySection.private),
-                children: vm
-                    .section(LibrarySection.private)
-                    .map<Widget>((e) => _PaperRow(item: e))
-                    .toList(),
-              ),
+              if (auth.isLoggedIn)
+                _CollectionTile(
+                  title: 'Private Papers',
+                  count: vm.section(LibrarySection.private).length,
+                  initiallyExpanded: _isInit(LibrarySection.private),
+                  children: vm
+                      .section(LibrarySection.private)
+                      .map<Widget>((e) => _PaperRow(item: e))
+                      .toList(),
+                ),
               // 사용자 폴더도 Expandable
               ...vm.folders.map(
                 (f) => _CollectionTile(

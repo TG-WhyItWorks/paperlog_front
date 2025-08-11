@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
+import '../../../core/services/token_storage.dart';
 
 class LibraryService {
   // dart-define으로 주입: flutter run -d chrome --dart-define=API_URL=https://daf1d4db1de5.ngrok-free.app
@@ -13,10 +14,22 @@ class LibraryService {
     defaultValue: 'http://localhost:8000',
   );
 
+  final _tokenStorage = TokenStorage();
+  Map<String, String> _baseHeaders() => const {
+    'Content-Type': 'application/json',
+    // ngrok 경고 페이지 우회
+    'ngrok-skip-browser-warning': 'true',
+  };
+  Future<Map<String, String>> _authHeaders() async {
+    final at = await _tokenStorage.readAccessToken();
+    if (at == null || at.isEmpty) return _baseHeaders();
+    return {..._baseHeaders(), 'Authorization': 'Bearer $at'};
+  }
+
   Future<List<LibraryItem>> fetchLibrary() async {
     final uri = Uri.parse('$_baseUrl/library'); // FastAPI: GET /library
     try {
-      final res = await http.get(uri);
+      final res = await http.get(uri, headers: await _authHeaders());
       if (res.statusCode == 200) {
         final List data = json.decode(res.body) as List;
         return data.map<LibraryItem>((e) {
@@ -66,6 +79,32 @@ class LibraryService {
     ];
   }
 
+  /// 폴더 생성 (FastAPI: POST /folders)
+  Future<LibraryFolder> createFolder({
+    required String folderName,
+    int? parentFolderId,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/folders');
+    final res = await http.post(
+      uri,
+      headers: await _authHeaders(),
+      body: json.encode({
+        'folder_name': folderName,
+        'parent_folder_id': parentFolderId, // null 허용
+      }),
+    );
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      throw Exception('폴더 생성 실패: HTTP ${res.statusCode} ${res.body}');
+    }
+    final map = json.decode(res.body) as Map<String, dynamic>;
+    // 백엔드 폴더 응답에 맞춰 맵핑 (id:int -> String 변환)
+    return LibraryFolder(
+      id: (map['id'] ?? '').toString(),
+      name: (map['folder_name'] ?? '').toString(),
+      count: (map['count'] is int) ? map['count'] as int : 0,
+    );
+  }
+
   /// Private PDF 업로드 (FastAPI: POST /private-papers/upload)
   Future<Paper> uploadPrivatePdf({
     required String filename,
@@ -75,6 +114,12 @@ class LibraryService {
     final uri = Uri.parse('$_baseUrl/private-papers/upload');
     final req = http.MultipartRequest('POST', uri);
     if (fields != null) req.fields.addAll(fields);
+    // 인증/ngrok 헤더 추가
+    final at = await _tokenStorage.readAccessToken();
+    req.headers['ngrok-skip-browser-warning'] = 'true';
+    if (at != null && at.isNotEmpty) {
+      req.headers['Authorization'] = 'Bearer $at';
+    }
 
     //final mime = lookupMimeType(filename) ?? 'application/pdf';
     //final parts = mime.split('/');

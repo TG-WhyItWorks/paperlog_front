@@ -19,6 +19,7 @@ class AuthViewModel extends ChangeNotifier {
   AuthStatus _status = AuthStatus.idle;
   String? _errorMessage;
   UserModel? _user;
+  int? get userId => _user?.id;
 
   AuthStatus get status => _status;
   String? get errorMessage => _errorMessage;

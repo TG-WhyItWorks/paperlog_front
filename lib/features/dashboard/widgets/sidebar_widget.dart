@@ -3,12 +3,20 @@ import 'package:provider/provider.dart';
 import '../viewmodel/dashboard_viewmodel.dart';
 import '../../../core/models/library_models.dart';
 import '../../library/viewmodel/library_viewmodel.dart';
+import '../../auth/viewmodel/auth_viewmodel.dart';
 
 class SidebarWidget extends StatelessWidget {
   const SidebarWidget({Key? key}) : super(key: key);
 
   Future<void> _addFolder(BuildContext context) async {
     final libVm = context.read<LibraryViewModel>();
+    final auth = context.read<AuthViewModel>();
+    if (!auth.isLoggedIn) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('로그인 후 이용해 주세요.')));
+      return;
+    }
     final controller = TextEditingController();
     final name = await showDialog<String>(
       context: context,
@@ -32,7 +40,7 @@ class SidebarWidget extends StatelessWidget {
       ),
     );
     if (name != null && name.trim().isNotEmpty) {
-      libVm.createFolder(name.trim());
+      await libVm.createFolder(name.trim(), parentFolderId: null);
     }
   }
 
@@ -40,6 +48,7 @@ class SidebarWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final main = context.watch<MainViewModel>();
     final lib = context.watch<LibraryViewModel>();
+    final auth = context.watch<AuthViewModel>();
 
     Widget libItem(String title, LibrarySection s) {
       final count = lib.section(s).length;
@@ -87,14 +96,15 @@ class SidebarWidget extends StatelessWidget {
                     context,
                   ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
                 ),
-                IconButton(
-                  tooltip: 'New folder',
-                  icon: Icon(
-                    Icons.add,
-                    color: Theme.of(context).iconTheme.color,
+                if (auth.isLoggedIn)
+                  IconButton(
+                    tooltip: 'New folder',
+                    icon: Icon(
+                      Icons.add,
+                      color: Theme.of(context).iconTheme.color,
+                    ),
+                    onPressed: () => _addFolder(context),
                   ),
-                  onPressed: () => _addFolder(context),
-                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -107,26 +117,28 @@ class SidebarWidget extends StatelessWidget {
                 context,
               ).pushNamed('/library', arguments: LibrarySection.myPublications),
             ),
-            _collectionRow(
-              context,
-              title: 'Private Papers',
-              count: lib.section(LibrarySection.private).length,
-              icon: Icons.lock_outline,
-              onTap: () => Navigator.of(
+            if (auth.isLoggedIn)
+              _collectionRow(
                 context,
-              ).pushNamed('/library', arguments: LibrarySection.private),
-            ),
+                title: 'Private Papers',
+                count: lib.section(LibrarySection.private).length,
+                icon: Icons.lock_outline,
+                onTap: () => Navigator.of(
+                  context,
+                ).pushNamed('/library', arguments: LibrarySection.private),
+              ),
 
             // 사용자 폴더
-            ...lib.folders.map(
-              (f) => _collectionRow(
-                context,
-                title: f.name,
-                count: f.count,
-                icon: Icons.folder_outlined,
-                onTap: () => Navigator.of(context).pushNamed('/library'),
+            if (auth.isLoggedIn)
+              ...lib.folders.map(
+                (f) => _collectionRow(
+                  context,
+                  title: f.name,
+                  count: f.count,
+                  icon: Icons.folder_outlined,
+                  onTap: () => Navigator.of(context).pushNamed('/library'),
+                ),
               ),
-            ),
 
             ///TODO: 블로그 구현
             // const Divider(),
