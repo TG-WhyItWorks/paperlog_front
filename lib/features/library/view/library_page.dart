@@ -134,6 +134,104 @@ class _LibraryContent extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
+        AnimatedSize(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeInOutCubic,
+          child: vm.isSelecting
+              ? Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceVariant.withOpacity(0.35),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Theme.of(context).dividerColor.withOpacity(0.6),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // 이동
+                      PopupMenuButton<String>(
+                        tooltip: 'Move',
+                        itemBuilder: (ctx) => [
+                          const PopupMenuItem(
+                            value: 'want',
+                            child: Text('Move → Want to read'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'reading',
+                            child: Text('Move → Reading'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'completed',
+                            child: Text('Move → Completed'),
+                          ),
+                          const PopupMenuDivider(),
+                          const PopupMenuItem(
+                            value: 'folder',
+                            child: Text('Move → Folder…'),
+                          ),
+                        ],
+                        onSelected: (v) async {
+                          if (v == 'want')
+                            await vm.moveSelectedToSection(
+                              LibrarySection.wantToRead,
+                            );
+                          if (v == 'reading')
+                            await vm.moveSelectedToSection(
+                              LibrarySection.reading,
+                            );
+                          if (v == 'completed')
+                            await vm.moveSelectedToSection(
+                              LibrarySection.completed,
+                            );
+                          if (v == 'folder') {
+                            final id = await _pickFolder(
+                              context,
+                              vm,
+                            ); // ⬅ 아래 함수 추가
+                            if (id != null) await vm.moveSelectedToFolder(id);
+                          }
+                        },
+                        child: Row(
+                          children: const [
+                            Icon(Icons.drive_file_move_outlined, size: 18),
+                            SizedBox(width: 6),
+                            Text('Move'),
+                            Icon(Icons.arrow_drop_down),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // 삭제
+                      TextButton.icon(
+                        onPressed: () async => await vm.deleteSelected(),
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text('Delete'),
+                      ),
+                      const Spacer(),
+                      // 개수
+                      Text(
+                        '${vm.selectedPaperCount} papers'
+                        '${vm.selectedPostCount > 0 ? ' · ${vm.selectedPostCount} posts' : ''}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(width: 12),
+                      TextButton(
+                        onPressed: vm.clearSelection,
+                        child: const Text('Cancel'),
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+
         Expanded(
           child: ListView(
             children: [
@@ -376,6 +474,54 @@ List<Widget> _buildFolderTree(BuildContext context, LibraryViewModel vm) {
         count: f.count,
         initiallyExpanded: false,
         onAdd: () => _showFolderActions(context, vm, f.id),
+        onRename: () async {
+          final controller = TextEditingController(text: f.name);
+          final newName = await showDialog<String>(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('Rename folder'),
+              content: TextField(controller: controller, autofocus: true),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () =>
+                      Navigator.pop(context, controller.text.trim()),
+                  child: const Text('Save'),
+                ),
+              ],
+            ),
+          );
+          if (newName != null && newName.isNotEmpty) {
+            await vm.renameFolder(f.id!, newName); // ⬅ ViewModel에 구현
+            await vm.refresh();
+          }
+        },
+        onDelete: () async {
+          final ok = await showDialog<bool>(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('Delete folder'),
+              content: Text('Delete "${f.name}"?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
+          );
+          if (ok == true) {
+            await vm.deleteFolder(f.id!); // ⬅ ViewModel에 구현
+            await vm.refresh();
+          }
+        },
         children: grandChildren.isEmpty
             ? const [
                 Padding(
@@ -391,60 +537,135 @@ List<Widget> _buildFolderTree(BuildContext context, LibraryViewModel vm) {
   return buildBranch(null);
 }
 
-class _PaperRow extends StatelessWidget {
+class _PaperRow extends StatefulWidget {
   final LibraryItem item;
   const _PaperRow({required this.item});
 
   @override
+  State<_PaperRow> createState() => _PaperRowState();
+}
+
+class _PaperRowState extends State<_PaperRow> {
+  bool _hover = false;
+  String _dateString(Paper p) {
+    if (p.year != null) return '${p.year}.';
+    return '';
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final paper = item.paper;
-    return ListTile(
-      dense: true,
-      contentPadding: const EdgeInsets.only(left: 0, right: 8),
-      leading: const Icon(Icons.article_outlined, size: 18),
-      title: Row(
-        children: [
-          Expanded(
-            child: InkWell(
-              onTap: () => Navigator.of(
-                context,
-              ).pushNamed('/paper', arguments: paper.id),
-              child: Text(
-                paper.title,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  decoration: TextDecoration.underline,
+    final vm = context.watch<LibraryViewModel>();
+    final p = widget.item.paper;
+    final selected = vm.isPaperSelected(p.id);
+
+    final authors = (p.authors != null && p.authors!.isNotEmpty)
+        ? p.authors!.join(', ')
+        : '';
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: ListTile(
+        dense: true,
+        contentPadding: const EdgeInsets.only(left: 0, right: 8),
+        // ⬅ leading: 체크박스(선택 중/호버일 때) 또는 아이콘
+        leading: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 140),
+          child: (selected || _hover)
+              ? Checkbox(
+                  key: const ValueKey('cb'),
+                  value: selected,
+                  onChanged: (_) => vm.togglePaperSelected(p.id),
+                  visualDensity: VisualDensity.compact,
+                )
+              : const Icon(
+                  Icons.article_outlined,
+                  size: 18,
+                  key: ValueKey('ic'),
                 ),
-                overflow: TextOverflow.ellipsis,
+        ),
+        // ⬅ 제목 + (Private Chip)
+        title: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  if (vm.isSelecting) {
+                    vm.togglePaperSelected(p.id);
+                  } else {
+                    Navigator.of(context).pushNamed('/paper', arguments: p.id);
+                  }
+                },
+                child: Text(
+                  p.title,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    decoration: vm.isPaperSelected(p.id)
+                        ? TextDecoration.underline
+                        : TextDecoration.none,
+                  ),
+                ),
               ),
             ),
+            if (widget.item.isPrivate)
+              Container(
+                margin: const EdgeInsets.only(left: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.4),
+                  ),
+                ),
+                child: Text(
+                  'Private',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ),
+          ],
+        ),
+        // ⬅ 요약 제거, 날짜 · 저자만
+        subtitle: Row(
+          children: [
+            if (_dateString(p).isNotEmpty)
+              Text(
+                _dateString(p),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            if (_dateString(p).isNotEmpty && authors.isNotEmpty)
+              Text(' · ', style: Theme.of(context).textTheme.bodySmall),
+            if (authors.isNotEmpty)
+              Expanded(
+                child: Text(
+                  authors,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+          ],
+        ),
+        // ⬅ trailing: hover/선택 시 삭제 아이콘
+        trailing: AnimatedOpacity(
+          opacity: (_hover || selected) ? 1 : 0,
+          duration: const Duration(milliseconds: 140),
+          child: IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Delete',
+            onPressed: () async {
+              vm.togglePaperSelected(p.id);
+              await vm.deleteSelected();
+            },
           ),
-          if (item.isPrivate)
-            Container(
-              margin: const EdgeInsets.only(left: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
-                ),
-              ),
-              child: Text(
-                'Private',
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-            ),
-        ],
-      ),
-      subtitle: Text(
-        paper.abstractText,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: IconButton(
-        icon: const Icon(Icons.more_horiz),
-        onPressed: () {},
+        ),
+        // ⬅ 행 전체 클릭 시 선택 토글(선택 모드일 때)
+        onTap: vm.isSelecting ? () => vm.togglePaperSelected(p.id) : null,
       ),
     );
   }
@@ -467,63 +688,95 @@ class _CountChip extends StatelessWidget {
 }
 
 /// My Collections(가상/사용자 폴더) 확장용 타일
-class _CollectionTile extends StatelessWidget {
+class _CollectionTile extends StatefulWidget {
   final String title;
   final int count;
   final bool initiallyExpanded;
   final List<Widget> children;
   final VoidCallback? onAdd;
+  final VoidCallback? onRename;
+  final VoidCallback? onDelete;
   const _CollectionTile({
     required this.title,
     required this.count,
     this.initiallyExpanded = false,
     this.children = const [],
     this.onAdd,
+    this.onRename,
+    this.onDelete,
   });
 
   @override
+  State<_CollectionTile> createState() => _CollectionTileState();
+}
+
+class _CollectionTileState extends State<_CollectionTile> {
+  bool _hover = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        initiallyExpanded: initiallyExpanded,
-        tilePadding: EdgeInsets.zero,
-        childrenPadding: const EdgeInsets.only(left: 8),
-        leading: Icon(
-          Icons.folder_outlined,
-          size: 18,
-          color: Theme.of(context).iconTheme.color,
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Text(title, style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(width: 8),
-                  _CountChip(count: count),
-                ],
-              ),
-            ),
-            if (onAdd != null)
-              IconButton(
-                tooltip: 'Add to folder',
-                icon: const Icon(Icons.add, size: 18),
-                onPressed: onAdd,
-              ),
-          ],
-        ),
-        children: children.isEmpty
-            ? [
-                Padding(
-                  padding: const EdgeInsets.only(left: 8, bottom: 12),
-                  child: Text(
-                    '없음',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: widget.initiallyExpanded,
+          tilePadding: EdgeInsets.zero,
+          childrenPadding: const EdgeInsets.only(left: 8),
+          leading: Icon(
+            Icons.folder_outlined,
+            size: 18,
+            color: Theme.of(context).iconTheme.color,
+          ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Text(
+                      widget.title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(width: 8),
+                    _CountChip(count: widget.count),
+                  ],
                 ),
-              ]
-            : children,
+              ),
+              if (widget.onAdd != null && !_hover)
+                IconButton(
+                  tooltip: 'Add to folder',
+                  icon: const Icon(Icons.add, size: 18),
+                  onPressed: widget.onAdd,
+                ),
+              if (_hover) ...[
+                if (widget.onRename != null)
+                  IconButton(
+                    tooltip: 'Rename',
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    onPressed: widget.onRename,
+                  ),
+                if (widget.onDelete != null)
+                  IconButton(
+                    tooltip: 'Delete folder',
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    onPressed: widget.onDelete,
+                  ),
+              ],
+            ],
+          ),
+          children: widget.children.isEmpty
+              ? [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8, bottom: 12),
+                    child: Text(
+                      '없음',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ]
+              : widget.children,
+        ),
       ),
     );
   }
@@ -643,6 +896,43 @@ void _showCollectionsActions(BuildContext context, LibraryViewModel vm) {
           ),
         ],
       ),
+    ),
+  );
+}
+
+Future<String?> _pickFolder(BuildContext context, LibraryViewModel vm) async {
+  String? selected;
+  return showDialog<String>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('Select folder'),
+      content: SizedBox(
+        width: 360,
+        height: 320,
+        child: ListView(
+          children: vm.folders
+              .map(
+                (f) => RadioListTile<String>(
+                  value: f.id!,
+                  groupValue: selected,
+                  onChanged: (v) => selected = v,
+                  title: Text(f.name),
+                  secondary: const Icon(Icons.folder_outlined, size: 18),
+                ),
+              )
+              .toList(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, selected),
+          child: const Text('Move'),
+        ),
+      ],
     ),
   );
 }

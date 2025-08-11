@@ -20,6 +20,179 @@ class LibraryViewModel extends ChangeNotifier {
   List<LibraryFolder> _folders = const <LibraryFolder>[];
   List<LibraryFolder> get folders => _folders;
 
+  //선택 상테
+  final Set<String> selectedPaperIds = {};
+  final Set<String> selectedPostIds = {};
+
+  // ------------------------------
+  // 선택 상태/헬퍼
+  // ------------------------------
+  bool get isSelecting =>
+      selectedPaperIds.isNotEmpty || selectedPostIds.isNotEmpty;
+
+  int get selectedPaperCount => selectedPaperIds.length;
+  int get selectedPostCount => selectedPostIds.length;
+
+  bool isPaperSelected(String id) => selectedPaperIds.contains(id);
+
+  void togglePaperSelected(String id) {
+    if (!selectedPaperIds.remove(id)) selectedPaperIds.add(id);
+    notifyListeners();
+  }
+
+  void clearSelection() {
+    selectedPaperIds.clear();
+    selectedPostIds.clear();
+    notifyListeners();
+  }
+
+  // ------------------------------
+  // 액션: 섹션으로 이동(워치리스트/리딩/완료)
+  // ------------------------------
+  Future<void> moveSelectedToSection(LibrarySection section) async {
+    final ids = selectedPaperIds.toSet();
+    if (ids.isEmpty) return;
+
+    isLoading = true;
+    notifyListeners();
+    try {
+      // 서버가 있으면 호출
+      // await _service.movePapersToSection(ids.toList(), section);
+
+      // 메모리 갱신
+      items = items
+          .map(
+            (e) => ids.contains(e.paper.id)
+                ? LibraryItem(
+                    paper: e.paper,
+                    section: section,
+                    isPrivate: e.isPrivate,
+                  )
+                : e,
+          )
+          .toList(growable: false);
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      isLoading = false;
+      clearSelection();
+      notifyListeners();
+    }
+  }
+
+  // ------------------------------
+  // 액션: 폴더로 이동
+  // ------------------------------
+  Future<void> moveSelectedToFolder(String folderId) async {
+    final ids = selectedPaperIds.toList();
+    if (ids.isEmpty) return;
+
+    isLoading = true;
+    notifyListeners();
+    try {
+      // 서버가 있으면 호출 (folderId는 숫자면 parse)
+      // final fid = int.tryParse(folderId);
+      // await _service.movePapersToFolder(ids, folderId: fid);
+
+      // 폴더 카운트 +n 반영(간단 버전)
+      final uid = _auth?.userId;
+      if (uid != null) {
+        final list = [...(_userFolders[uid] ?? const <LibraryFolder>[])];
+        final idx = list.indexWhere((f) => f.id == folderId);
+        if (idx != -1) {
+          final f = list[idx];
+          list[idx] = LibraryFolder(
+            id: f.id,
+            name: f.name,
+            count: f.count + ids.length,
+          );
+          _userFolders[uid] = list;
+          _folders = list;
+        }
+      }
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      isLoading = false;
+      clearSelection();
+      notifyListeners();
+    }
+  }
+
+  // ------------------------------
+  // 액션: 선택 삭제
+  // ------------------------------
+  Future<void> deleteSelected() async {
+    final ids = selectedPaperIds.toList();
+    if (ids.isEmpty) return;
+
+    isLoading = true;
+    notifyListeners();
+    try {
+      // 서버가 있으면 호출
+      // await _service.deletePapers(ids);
+
+      // 메모리 삭제
+      items = items
+          .where((e) => !ids.contains(e.paper.id))
+          .toList(growable: false);
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      isLoading = false;
+      clearSelection();
+      notifyListeners();
+    }
+  }
+
+  // ------------------------------
+  // 폴더 편집(호버 시 아이콘용)
+  // ------------------------------
+  Future<void> renameFolder(String folderId, String newName) async {
+    final uid = _auth?.userId;
+    if (uid == null || newName.trim().isEmpty) return;
+
+    try {
+      // await _service.renameFolder(folderId: int.tryParse(folderId), name: newName);
+      final list = [...(_userFolders[uid] ?? const <LibraryFolder>[])];
+      final idx = list.indexWhere((f) => f.id == folderId);
+      if (idx != -1) {
+        final f = list[idx];
+        list[idx] = LibraryFolder(id: f.id, name: newName, count: f.count);
+        _userFolders[uid] = list;
+        _folders = list;
+      }
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteFolder(String folderId) async {
+    final uid = _auth?.userId;
+    if (uid == null) return;
+
+    try {
+      // await _service.deleteFolder(folderId: int.tryParse(folderId));
+      final list = [...(_userFolders[uid] ?? const <LibraryFolder>[])];
+      list.removeWhere((f) => f.id == folderId);
+      _userFolders[uid] = list;
+      _folders = list;
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  // ------------------------------
+  // 간단 새로고침 훅 (필요할 때 UI에서 호출)
+  // ------------------------------
+  Future<void> refresh() async {
+    await load();
+  }
+
   AuthViewModel? _auth;
   void bindAuth(AuthViewModel auth) {
     if (_auth == auth) return;
