@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import '../viewmodel/dashboard_viewmodel.dart';
 import '../widgets/header_widget.dart';
 import '../widgets/sidebar_widget.dart';
-import '../widgets/searchbar_widget.dart';
 import '../widgets/recommend_paper_card.dart';
-import '../widgets/folder_list_widget.dart';
 import 'package:provider/provider.dart';
 
 class MainScreen extends StatefulWidget {

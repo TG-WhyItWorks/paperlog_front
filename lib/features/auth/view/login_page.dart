@@ -1,14 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in_web/google_sign_in_web.dart'
-    show
-        GSIButtonConfiguration,
-        GSIButtonType,
-        GSIButtonTheme,
-        GSIButtonSize,
-        GSIButtonText,
-        GSIButtonShape,
-        GSIButtonLogoAlignment;
+import 'package:google_sign_in_web/google_sign_in_web.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/auth_viewmodel.dart';
 import '../../dashboard/widgets/header_widget.dart';

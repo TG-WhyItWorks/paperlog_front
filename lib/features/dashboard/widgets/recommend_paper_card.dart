@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/paper_model.dart';
-import '../../explore/widgets/paper_card.dart';
 import '../../library/widgets/save_bookmark_dialog.dart';
+import 'package:paperlog_front/shared/widgets/like_button.dart';
 
 class RecommendPaperCard extends StatelessWidget {
   final Paper paper;
@@ -95,11 +95,10 @@ class RecommendPaperCard extends StatelessWidget {
                     onTap: () => SaveBookmarkDialog.show(context, paper: paper),
                   ),
                   const SizedBox(width: 8),
-                  _LikeButton(
-                    count: paper.likeCount ?? 0,
-                    onTap: () {
-                      /*TODO: */
-                    },
+                  LikeButton(
+                    paperId: paper.id,
+                    initialCount: paper.likeCount, // Paper.likeCount는 int(널X)
+                    initialLiked: paper.isLiked ?? false,
                   ),
                 ],
               ),

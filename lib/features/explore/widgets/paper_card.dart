@@ -4,6 +4,7 @@ import '../../../core/models/paper_model.dart';
 import '../../../shared/prefs/date_formatting.dart' as df;
 import '../../../shared/prefs/prefs_provider.dart' as prefs;
 import 'package:provider/provider.dart';
+import 'package:paperlog_front/shared/widgets/like_button.dart';
 
 class PaperCard extends StatelessWidget {
   const PaperCard({required this.paper, Key? key}) : super(key: key);
@@ -97,11 +98,10 @@ class PaperCard extends StatelessWidget {
                     onTap: () => SaveBookmarkDialog.show(context, paper: paper),
                   ),
                   const SizedBox(width: 8),
-                  _LikeButton(
-                    count: paper.likeCount ?? 0,
-                    onTap: () {
-                      /*TODO: */
-                    },
+                  LikeButton(
+                    paperId: paper.id,
+                    initialCount: paper.likeCount, // Paper.likeCount는 int(널X)
+                    initialLiked: paper.isLiked ?? false,
                   ),
                 ],
               ),
