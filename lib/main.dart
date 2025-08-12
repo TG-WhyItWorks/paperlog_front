@@ -4,6 +4,7 @@ import 'package:paperlog_front/features/explore/view/explore_page.dart';
 import 'package:paperlog_front/features/explore/viewmodel/explore_viewmodel.dart';
 import 'package:paperlog_front/features/paper/view/paper_detail_page.dart';
 import 'package:paperlog_front/features/paper/viewmodel/paper_detail_viewmodel.dart';
+import 'package:paperlog_front/shared/prefs/prefs_provider.dart';
 import 'package:provider/provider.dart';
 import 'features/dashboard/view/main_screen.dart';
 import 'shared/theme/app_theme.dart';
@@ -14,8 +15,6 @@ import 'features/dashboard/viewmodel/dashboard_viewmodel.dart';
 import 'features/profile/view/profile_page.dart';
 import 'features/library/view/library_page.dart';
 import 'features/library/viewmodel/library_viewmodel.dart';
-import 'core/models/library_models.dart';
-import 'features/settings/viewmodel/settings_viewmodel.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +26,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => MainViewModel()),
         ChangeNotifierProvider(create: (_) => LibraryViewModel()..init()),
+        ChangeNotifierProvider(create: (_) => PrefsProvider()),
       ],
       child: const PaperLogApp(),
     ),

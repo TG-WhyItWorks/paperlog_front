@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paperlog_front/shared/prefs/prefs_provider.dart';
 import 'package:provider/provider.dart';
 import '../../../shared/theme/theme_provider.dart';
 import '../../auth/viewmodel/auth_viewmodel.dart';
@@ -305,6 +306,7 @@ class _AppearancePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProv = context.watch<ThemeProvider>();
+    final prefs = context.watch<PrefsProvider>();
     final mode = themeProv.mode;
 
     return ListView(
@@ -328,6 +330,50 @@ class _AppearancePanel extends StatelessWidget {
               ),
               // 필요 시 시스템 모드도 추가 가능
               // RadioListTile(value: ThemeMode.system, ...)
+            ],
+          ),
+        ),
+        // ✅ 여기부터 추가: 날짜 형식 카드
+        _Card(
+          title: '날짜 형식',
+          subtitle: '목록/카드에서 날짜를 표시하는 형식입니다.',
+          child: Column(
+            children: [
+              RadioListTile<DateFormatOption>(
+                value: DateFormatOption.ymdDots,
+                groupValue: prefs.dateFormat,
+                title: const Text('2025.08.12'),
+                onChanged: (v) =>
+                    context.read<PrefsProvider>().setDateFormat(v!),
+              ),
+              RadioListTile<DateFormatOption>(
+                value: DateFormatOption.ymdDash,
+                groupValue: prefs.dateFormat,
+                title: const Text('2025-08-12'),
+                onChanged: (v) =>
+                    context.read<PrefsProvider>().setDateFormat(v!),
+              ),
+              RadioListTile<DateFormatOption>(
+                value: DateFormatOption.ymdSlash,
+                groupValue: prefs.dateFormat,
+                title: const Text('2025/08/12'),
+                onChanged: (v) =>
+                    context.read<PrefsProvider>().setDateFormat(v!),
+              ),
+              RadioListTile<DateFormatOption>(
+                value: DateFormatOption.ymdKorean,
+                groupValue: prefs.dateFormat,
+                title: const Text('2025년 08월 12일'),
+                onChanged: (v) =>
+                    context.read<PrefsProvider>().setDateFormat(v!),
+              ),
+              RadioListTile<DateFormatOption>(
+                value: DateFormatOption.relative,
+                groupValue: prefs.dateFormat,
+                title: const Text('상대 시간(오늘/어제/…)'),
+                onChanged: (v) =>
+                    context.read<PrefsProvider>().setDateFormat(v!),
+              ),
             ],
           ),
         ),

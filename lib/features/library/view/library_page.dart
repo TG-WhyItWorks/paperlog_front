@@ -8,6 +8,8 @@ import '../viewmodel/library_viewmodel.dart';
 import '../../../core/models/library_models.dart';
 import '../../auth/viewmodel/auth_viewmodel.dart';
 import '../../../core/models/paper_model.dart';
+import '../../../shared/prefs/date_formatting.dart' as df;
+import '../../../shared/prefs/prefs_provider.dart' as prefs;
 
 class LibraryPage extends StatelessWidget {
   final LibrarySection? initialSection;
@@ -570,8 +572,17 @@ class _PaperRow extends StatefulWidget {
 class _PaperRowState extends State<_PaperRow> {
   bool _hover = false;
   String _dateString(Paper p) {
-    if (p.year != null) return '${p.year}.';
-    return '';
+    DateTime? dt = p.publishedAt;
+
+    if (dt == null) {
+      final y = int.tryParse(p.year);
+      if (y != null) {
+        dt = DateTime(y, 1, 1);
+      }
+    }
+    final opt = context.read<prefs.PrefsProvider>().dateFormat;
+    if (dt == null) return '';
+    return df.formatDate(dt, opt);
   }
 
   @override

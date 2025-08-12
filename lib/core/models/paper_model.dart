@@ -8,13 +8,13 @@ class Paper {
   final List<String> fields;
   final String pdfUrl;
   final String abstractText;
-
-  final String translatedAbstract; // 임의의 필드
-  final String blogSummary; // 임의의 필드
-  final List<dynamic> relatedBlogs; // 타입에 맞게 수정 필요
-  final String? doi; // Nullable 타입으로 변경
+  final DateTime? publishedAt;
+  final String translatedAbstract;
+  final String blogSummary;
+  final List<dynamic> relatedBlogs;
+  final String? doi;
   final int likeCount;
-  final bool? isLiked; // Nullable 타입으로 변경
+  final bool? isLiked;
 
   Paper({
     required this.id,
@@ -24,9 +24,10 @@ class Paper {
     required this.fields,
     required this.pdfUrl,
     required this.abstractText,
-    this.translatedAbstract = '번역된 초록이 여기에 표시됩니다.', // 기본값 설정
-    this.blogSummary = '블로그 요약이 여기에 표시됩니다.', // 기본값 설정
-    this.relatedBlogs = const [], // 기본값 설정
+    this.publishedAt,
+    this.translatedAbstract = '번역된 초록이 여기에 표시됩니다.',
+    this.blogSummary = '블로그 요약이 여기에 표시됩니다.',
+    this.relatedBlogs = const [],
     this.doi,
     this.likeCount = 0,
     this.isLiked,
@@ -40,6 +41,7 @@ class Paper {
     List<String>? fields,
     String? pdfUrl,
     String? abstractText,
+    DateTime? publishedAt,
     String? translatedAbstract,
     String? blogSummary,
     List<dynamic>? relatedBlogs,
@@ -55,6 +57,7 @@ class Paper {
       fields: fields ?? List<String>.from(this.fields),
       pdfUrl: pdfUrl ?? this.pdfUrl,
       abstractText: abstractText ?? this.abstractText,
+      publishedAt: publishedAt ?? this.publishedAt,
       translatedAbstract: translatedAbstract ?? this.translatedAbstract,
       blogSummary: blogSummary ?? this.blogSummary,
       relatedBlogs: relatedBlogs ?? List<dynamic>.from(this.relatedBlogs),
@@ -77,13 +80,31 @@ class Paper {
       if (v is int) return v;
       if (v is String) return int.tryParse(v) ?? fb;
       return fb;
-    }
+    } // ⬇️ published 파싱 (여러 키 대응 + epoch 방어)
 
-    final publishedRaw =
+    final raw =
         json['published'] ?? json['publishDate'] ?? json['published_at'] ?? '';
-    final publishedDate =
-        DateTime.tryParse(publishedRaw.toString()) ?? DateTime.now();
-    final year = DateFormat('yyyy').format(publishedDate);
+    DateTime? publishedAt;
+    if (raw is String && raw.isNotEmpty) {
+      // 예: "2018-04-09T12:00:08"
+      publishedAt = DateTime.tryParse(raw);
+    } else if (raw is int) {
+      // 만약 서버가 epoch seconds/millis로 줄 수도 있으니 방어
+      if (raw > 1000000000000) {
+        publishedAt = DateTime.fromMillisecondsSinceEpoch(
+          raw,
+          isUtc: true,
+        ).toLocal();
+      } else if (raw > 1000000000) {
+        publishedAt = DateTime.fromMillisecondsSinceEpoch(
+          raw * 1000,
+          isUtc: true,
+        ).toLocal();
+      }
+    }
+    final year = (publishedAt != null)
+        ? DateFormat('yyyy').format(publishedAt)
+        : _s(json['year'], ''); // 백호환
 
     // reviews → BlogPost 리스트(없으면 빈 리스트)
     final reviews = (json['reviews'] is List)
@@ -98,13 +119,14 @@ class Paper {
     }).toList();
 
     return Paper(
-      id: _s(json['arxiv_id'] ?? json['id']), // 둘 중 있는 걸 사용
+      id: _s(json['arxiv_id'] ?? json['id']),
       title: _s(json['title']),
       authors: _ls(json['authors']),
       year: year,
       fields: _ls(json['categories'] ?? json['tags']),
       pdfUrl: _s(json['link'] ?? json['pdfUrl'] ?? json['pdf_url']),
       abstractText: _s(json['summary'] ?? json['abstract']),
+      publishedAt: publishedAt,
       doi: (json['doi'] == null) ? null : json['doi'].toString(),
       likeCount: _i(json['like_count']),
       isLiked: (json['is_liked'] is bool) ? json['is_liked'] as bool : null,

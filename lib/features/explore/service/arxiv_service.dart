@@ -47,19 +47,73 @@ class ArxivService {
     throw Exception('Unexpected response shape');
   }
 
-  /// 백엔드가 snake_case를 쓰거나 키가 살짝 다른 경우를 흡수
   Map<String, dynamic> _normalize(Map<String, dynamic> j) {
+    List<String> _asList(dynamic v) {
+      if (v == null) return const <String>[];
+      if (v is List) return v.map((e) => e.toString()).toList();
+      if (v is String) {
+        return v
+            .split(RegExp(r',|\|')) // "A, B" 또는 "A|B"
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
+      }
+      return const <String>[];
+    }
+
+    // 저자가 객체 리스트로 오는 경우 [{name: '...'}] 대응
+    List<String> _authors(dynamic v) {
+      if (v is List && v.isNotEmpty && v.first is Map) {
+        return v
+            .map((e) => (e as Map)['name']?.toString() ?? '')
+            .where((s) => s.isNotEmpty)
+            .toList();
+      }
+      return _asList(v);
+    }
+
+    String _pdfUrl(Map<String, dynamic> j) {
+      final s = j['pdf_url'] ?? j['pdfUrl'] ?? j['link'] ?? j['url'];
+      if (s is String && s.isNotEmpty) return s;
+      // arXiv 스타일: links: [{rel:'alternate'| 'pdf', href:...}]
+      if (j['links'] is List) {
+        final links = (j['links'] as List).cast<dynamic>();
+        final pdf = links.cast<Map>().firstWhere(
+          (m) => (m['rel']?.toString() ?? '').toLowerCase() == 'pdf',
+          orElse: () => const {},
+        );
+        if (pdf['href'] is String) return pdf['href'] as String;
+        final first = links.cast<Map>().firstWhere(
+          (m) => m['href'] is String,
+          orElse: () => const {},
+        );
+        if (first['href'] is String) return first['href'] as String;
+      }
+      return '';
+    }
+
+    // published는 문자열 또는 epoch(int)로 들어올 수 있음 → 그대로 Paper.fromJson에 전달
+    final published =
+        j['published'] ??
+        j['publishDate'] ??
+        j['published_at'] ??
+        j['updated'] ??
+        j['date'];
+
     return {
-      // 아래 키들은 Paper.fromJson에서 쓰는 키 이름에 맞춰 변환해주세요.
-      'id': j['arxiv_id']?.toString() ?? '',
+      // Paper.fromJson이 이해하는 키들로 맞춰서 리매핑
+      'id': j['arxiv_id']?.toString() ?? j['id']?.toString() ?? '',
       'title': j['title'] ?? '',
       'summary': j['summary'] ?? j['abstract'] ?? '',
-      'tags': (j['tags'] ?? j['categories'] ?? const [])
-          .map((e) => e.toString())
-          .toList(),
-      'imageUrl': j['imageUrl'] ?? j['image_url'] ?? '',
-      'recommendationReason': j['recommendationReason'] ?? j['reason'] ?? '',
-      // 필요 시 publishDate 같은 필드도 추가
+      'authors': _authors(j['authors'] ?? j['author']),
+      'categories': _asList(j['categories'] ?? j['tags']),
+      'pdfUrl': _pdfUrl(j),
+      'published': published, // ← Paper.fromJson에서 DateTime으로 파싱
+      'year': j['year']?.toString(), // (없어도 됨, published에서 유도)
+      'doi': j['doi'],
+      'like_count': j['like_count'] ?? j['likeCount'] ?? 0,
+      'is_liked': j['is_liked'] ?? j['isLiked'],
+      'reviews': j['reviews'] ?? const [],
     };
   }
 }
