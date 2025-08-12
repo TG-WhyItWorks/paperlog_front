@@ -85,10 +85,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         padding: EdgeInsetsGeometry.all(16),
                         child: Text(
                           'User Settings',
-                          style: TextTheme.of(context).bodyLarge!.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge!
+                              .copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                              ),
                         ),
                       ),
                       _NavTile(

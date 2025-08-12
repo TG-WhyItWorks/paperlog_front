@@ -105,6 +105,7 @@ class LibraryViewModel extends ChangeNotifier {
             id: f.id,
             name: f.name,
             count: f.count + ids.length,
+            parentId: f.parentId,
           );
           _userFolders[uid] = list;
           _folders = list;
@@ -158,7 +159,12 @@ class LibraryViewModel extends ChangeNotifier {
       final idx = list.indexWhere((f) => f.id == folderId);
       if (idx != -1) {
         final f = list[idx];
-        list[idx] = LibraryFolder(id: f.id, name: newName, count: f.count);
+        list[idx] = LibraryFolder(
+          id: f.id,
+          name: newName,
+          count: f.count,
+          parentId: f.parentId,
+        );
         _userFolders[uid] = list;
         _folders = list;
       }
@@ -343,7 +349,12 @@ class LibraryViewModel extends ChangeNotifier {
       final idx = list.indexWhere((f) => f.id == folderIdStr);
       if (idx != -1) {
         final f = list[idx];
-        list[idx] = LibraryFolder(id: f.id, name: f.name, count: f.count + 1);
+        list[idx] = LibraryFolder(
+          id: f.id,
+          name: f.name,
+          count: f.count + 1,
+          parentId: f.parentId,
+        );
         _userFolders[uid] = list;
         _folders = list;
       }

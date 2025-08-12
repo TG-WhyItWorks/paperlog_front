@@ -765,12 +765,7 @@ class _CollectionTileState extends State<_CollectionTile> {
                   ],
                 ),
               ),
-              if (widget.onAdd != null && !_hover)
-                IconButton(
-                  tooltip: 'Add to folder',
-                  icon: const Icon(Icons.add, size: 18),
-                  onPressed: widget.onAdd,
-                ),
+
               if (_hover) ...[
                 if (widget.onRename != null)
                   IconButton(
@@ -785,6 +780,12 @@ class _CollectionTileState extends State<_CollectionTile> {
                     onPressed: widget.onDelete,
                   ),
               ],
+              if (widget.onAdd != null)
+                IconButton(
+                  tooltip: 'Add subfolder',
+                  icon: const Icon(Icons.create_new_folder_outlined, size: 18),
+                  onPressed: widget.onAdd,
+                ),
             ],
           ),
           children: widget.children.isEmpty

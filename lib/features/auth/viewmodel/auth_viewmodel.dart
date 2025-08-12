@@ -76,11 +76,8 @@ class AuthViewModel extends ChangeNotifier {
 
     try {
       if (kIsWeb) {
-        // 웹은 커스텀 버튼 onPressed로 signIn()을 호출하면 idToken이 없음 (경고 로그가 뜨는 이유)
-        // 반드시 renderButton 위젯을 사용해야 함.
         throw Exception('웹에서는 구글 제공 버튼(renderButton)으로 로그인하세요.');
       } else {
-        // 모바일/데스크톱은 기존 방식 사용
         final account = await _googleSignIn.signIn();
         if (account == null) {
           _status = AuthStatus.unauthenticated;
@@ -92,30 +89,6 @@ class AuthViewModel extends ChangeNotifier {
     }
     notifyListeners();
   }
-
-  // Future<void> signInWithGoogle() async {
-  //   _status = AuthStatus.loading;
-  //   notifyListeners();
-
-  //   try {
-  //     final account = await _googleSignIn.signIn();
-  //     if (account == null) {
-  //       // 사용자가 팝업을 닫은 경우
-  //       _status = AuthStatus.unauthenticated;
-  //     } else {
-  //       final auth = await account.authentication;
-  //       _user = await _authService.loginWithGoogle(
-  //         accessToken: auth.accessToken!,
-  //         idToken: auth.idToken!,
-  //       );
-  //       _status = AuthStatus.authenticated;
-  //     }
-  //   } catch (e) {
-  //     _errorMessage = e.toString();
-  //     _status = AuthStatus.error;
-  //   }
-  //   notifyListeners();
-  // }
 
   Future<void> signInWithEmail(String email, String password) async {
     _status = AuthStatus.loading;
