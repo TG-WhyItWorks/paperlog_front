@@ -493,6 +493,22 @@ List<Widget> _buildFolderTree(BuildContext context, LibraryViewModel vm) {
     final children = byParent[parentId] ?? const <LibraryFolder>[];
     return children.map((f) {
       final grandChildren = buildBranch(f.id);
+      final papers = vm.itemsInFolder(f.id!);
+      final paperRows = papers.map<Widget>((e) => _PaperRow(item: e)).toList();
+
+      // 폴더 + 논문 합치기
+      final composedChildren = <Widget>[
+        ...grandChildren,
+        if (grandChildren.isNotEmpty && paperRows.isNotEmpty)
+          const SizedBox(height: 6),
+        ...paperRows,
+        if (grandChildren.isEmpty && paperRows.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(left: 8, bottom: 12),
+            child: Text('없음'),
+          ),
+      ];
+
       return _CollectionTile(
         title: f.name,
         count: f.count,
@@ -546,14 +562,7 @@ List<Widget> _buildFolderTree(BuildContext context, LibraryViewModel vm) {
             await vm.refresh();
           }
         },
-        children: grandChildren.isEmpty
-            ? const [
-                Padding(
-                  padding: EdgeInsets.only(left: 8, bottom: 12),
-                  child: Text('없음'),
-                ),
-              ]
-            : grandChildren,
+        children: composedChildren,
       );
     }).toList();
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paperlog_front/features/library/widgets/save_bookmark_dialog.dart';
 import '../../../core/models/paper_model.dart';
 import '../../../shared/prefs/date_formatting.dart' as df;
 import '../../../shared/prefs/prefs_provider.dart' as prefs;
@@ -93,9 +94,7 @@ class PaperCard extends StatelessWidget {
               Row(
                 children: [
                   _BookmarkButton(
-                    onTap: () {
-                      /*TODO: 북마크 액션*/
-                    },
+                    onTap: () => SaveBookmarkDialog.show(context, paper: paper),
                   ),
                   const SizedBox(width: 8),
                   _LikeButton(

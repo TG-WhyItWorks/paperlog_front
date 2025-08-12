@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/paper_model.dart';
 import '../../explore/widgets/paper_card.dart';
+import '../../library/widgets/save_bookmark_dialog.dart';
 
 class RecommendPaperCard extends StatelessWidget {
   final Paper paper;
@@ -91,9 +92,7 @@ class RecommendPaperCard extends StatelessWidget {
               Row(
                 children: [
                   _BookmarkButton(
-                    onTap: () {
-                      /*TODO: 북마크 액션*/
-                    },
+                    onTap: () => SaveBookmarkDialog.show(context, paper: paper),
                   ),
                   const SizedBox(width: 8),
                   _LikeButton(
