@@ -4,6 +4,7 @@ import 'package:paperlog_front/features/explore/view/explore_page.dart';
 import 'package:paperlog_front/features/explore/viewmodel/explore_viewmodel.dart';
 import 'package:paperlog_front/features/paper/view/paper_detail_page.dart';
 import 'package:paperlog_front/features/paper/viewmodel/paper_detail_viewmodel.dart';
+import 'package:paperlog_front/shared/prefs/prefs_provider.dart';
 import 'package:provider/provider.dart';
 import 'features/dashboard/view/main_screen.dart';
 import 'shared/theme/app_theme.dart';
@@ -12,8 +13,8 @@ import 'features/dashboard/viewmodel/notification_viewmodel.dart';
 import 'features/auth/viewmodel/auth_viewmodel.dart';
 import 'features/dashboard/viewmodel/dashboard_viewmodel.dart';
 import 'features/profile/view/profile_page.dart';
-//import 'features/auth/view/login_page.dart';
-//import 'features/settings/view/settings_page.dart';
+import 'features/library/view/library_page.dart';
+import 'features/library/viewmodel/library_viewmodel.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +25,8 @@ void main() {
         ChangeNotifierProvider(create: (_) => NotificationViewModel()),
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => MainViewModel()),
+        ChangeNotifierProvider(create: (_) => LibraryViewModel()..init()),
+        ChangeNotifierProvider(create: (_) => PrefsProvider()),
       ],
       child: const PaperLogApp(),
     ),
@@ -48,18 +51,12 @@ class PaperLogApp extends StatelessWidget {
       routes: {
         '/': (_) => const MainScreen(),
         '/login': (_) => const LoginPage(),
-
-        // '/login': (context) => ChangeNotifierProvider.value(
-        //   value: Provider.of<AuthViewModel>(context, listen: false),
-        //   child: const LoginPage(),
-        // ),
-        //'/signup':(_) => const SignUpPage(),
         '/profile': (_) => ProfilePage(),
         '/explore': (context) {
           final initialQuery =
               ModalRoute.of(context)!.settings.arguments as String? ?? '';
-          return ChangeNotifierProvider<ExploreViewmodel>(
-            create: (_) => ExploreViewmodel()..search(initialQuery),
+          return ChangeNotifierProvider<ExploreViewModel>(
+            create: (_) => ExploreViewModel()..search(initialQuery),
             child: ExplorePage(initialQuery: initialQuery),
           );
         },
@@ -71,9 +68,7 @@ class PaperLogApp extends StatelessWidget {
             child: PaperDetailPage(paperId: paperId),
           );
         },
-        //'/library': (_) => LibraryPage(),
-        //'/login': (context) => LoginPage(),
-        //'/settings': (context) => SettingsPage(),
+        '/library': (context) => const LibraryPage(),
       },
 
       //존재하지 않는 라우트 요청 시 처리

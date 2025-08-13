@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import '../viewmodel/dashboard_viewmodel.dart';
 import '../widgets/header_widget.dart';
 import '../widgets/sidebar_widget.dart';
-import '../widgets/searchbar_widget.dart';
 import '../widgets/recommend_paper_card.dart';
-import '../widgets/folder_list_widget.dart';
 import 'package:provider/provider.dart';
 
 class MainScreen extends StatefulWidget {
@@ -15,25 +13,11 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  late final MainViewModel vm;
-
-  @override
-  void initState() {
-    super.initState();
-    vm = MainViewModel();
-    vm.addListener(() => setState(() {}));
-  }
-
-  @override
-  void dispose() {
-    vm.removeListener(() {});
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<MainViewModel>();
     return Scaffold(
+      //헤더
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
@@ -44,20 +28,27 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           Expanded(
             child: Row(
+              //사이드바
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (vm.isSidebarOpen) SidebarWidget(),
-                VerticalDivider(
+                const SidebarWidget(),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeInOutCubic,
                   width: 1,
-                  thickness: 1,
-                  color: Theme.of(context).dividerColor,
+                  color: vm.isSidebarOpen
+                      ? Theme.of(context).dividerColor
+                      : Colors.transparent,
                 ),
+
+                //본문
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        //타이틀
                         const SizedBox(height: 24),
                         Text(
                           'Recommended Papers',
@@ -68,6 +59,8 @@ class _MainScreenState extends State<MainScreen> {
                               ),
                         ),
                         const SizedBox(height: 16),
+
+                        //추천 논문 보여주기
                         Expanded(
                           child: ListView(
                             padding: EdgeInsets.zero,

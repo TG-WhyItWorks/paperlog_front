@@ -4,6 +4,7 @@ import '../viewmodel/dashboard_viewmodel.dart';
 import '../../../shared/theme/theme_provider.dart';
 import 'notification_icon.dart';
 import '../../profile/widgets/avatar_menu.dart';
+import '../../settings/view/settings_dialog.dart';
 
 class HeaderWidget extends StatefulWidget {
   const HeaderWidget({Key? key}) : super(key: key);
@@ -29,7 +30,7 @@ class _HeaderWidgetState extends State<HeaderWidget> {
   }
 
   @override
-  build(BuildContext context) {
+  Widget build(BuildContext context) {
     final isLight = context.watch<ThemeProvider>().mode == ThemeMode.light;
     final vm = context.watch<MainViewModel>();
     return Container(
@@ -94,7 +95,10 @@ class _HeaderWidgetState extends State<HeaderWidget> {
             selected: vm.currentPage == PageType.explore,
             onTap: () {
               vm.navigationTo(PageType.explore);
-              Navigator.of(context).pushNamed('/explore');
+              final current = ModalRoute.of(context)?.settings.name;
+              if (current != '/explore') {
+                Navigator.of(context).pushNamed('/explore');
+              }
             },
           ),
           _NavItem(
@@ -111,7 +115,13 @@ class _HeaderWidgetState extends State<HeaderWidget> {
           _NavItem(
             label: 'My Blog',
             selected: vm.currentPage == PageType.blog,
-            onTap: () => vm.navigationTo(PageType.blog),
+            onTap: () {
+              vm.navigationTo(PageType.blog);
+              final current = ModalRoute.of(context)?.settings.name;
+              if (current != '/blog') {
+                Navigator.of(context).pushNamed('/blog');
+              }
+            },
           ),
 
           const Spacer(),
@@ -138,7 +148,6 @@ class _HeaderWidgetState extends State<HeaderWidget> {
                   color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                 ),
               ),
-              style: const TextStyle(color: Colors.white),
               textInputAction: TextInputAction.search,
               onChanged: vm.setSearchQuery,
               onSubmitted: (q) {
@@ -160,6 +169,10 @@ class _HeaderWidgetState extends State<HeaderWidget> {
             onPressed: () => context.read<ThemeProvider>().toggle(),
           ),
           const NotificationIcon(),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => SettingsDialog.show(context),
+          ),
           const SizedBox(width: 16),
 
           /// 프로필 아바타

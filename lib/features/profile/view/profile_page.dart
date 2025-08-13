@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:paperlog_front/features/dashboard/viewmodel/dashboard_viewmodel.dart';
+import 'package:paperlog_front/features/profile/widgets/edit_bio_dialog.dart';
 import 'package:provider/provider.dart';
 
-//import '../../../core/models/profile_model.dart';
 import '../viewmodel/profile_viewmodel.dart';
 import '../widgets/profile_avatar_widget.dart';
 import '../widgets/profile_stat_widget.dart';
 import '../../dashboard/widgets/header_widget.dart';
 import '../../dashboard/widgets/sidebar_widget.dart';
 import '../../auth/viewmodel/auth_viewmodel.dart';
+
+import '../widgets/badge_card.dart';
+import '../widgets/interest_card.dart';
 
 class ProfilePage extends StatelessWidget {
   @override
@@ -30,12 +33,14 @@ class ProfilePage extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (context.watch<MainViewModel>().isSidebarOpen)
-                    SidebarWidget(),
-                  VerticalDivider(
+                  const SidebarWidget(),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 280),
+                    curve: Curves.easeInOutCubic,
                     width: 1,
-                    thickness: 1,
-                    color: Theme.of(context).dividerColor,
+                    color: context.watch<MainViewModel>().isSidebarOpen
+                        ? Theme.of(context).dividerColor
+                        : Colors.transparent,
                   ),
                   Expanded(
                     child: SingleChildScrollView(
@@ -47,7 +52,7 @@ class ProfilePage extends StatelessWidget {
                         builder: (context, constraints) {
                           final isWeb = constraints.maxWidth > 600;
                           final avatarSize = isWeb ? 120.0 : 80.0;
-                          final cardWidth = isWeb ? 600.0 : double.infinity;
+                          final cardWidth = isWeb ? 800.0 : double.infinity;
                           return Center(
                             child: Container(
                               width: cardWidth,
@@ -97,13 +102,6 @@ class ProfilePage extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 16),
                                   ],
-
-                                  // OutlinedButton(
-                                  //   onPressed: () =>
-                                  //       _showEditBioDialog(context, vm),
-                                  //   child: const Text('프로필 수정'),
-                                  // ),
-                                  // const SizedBox(height: 16),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -130,8 +128,15 @@ class ProfilePage extends StatelessWidget {
                                   const SizedBox(height: 16),
 
                                   OutlinedButton(
-                                    onPressed: () =>
-                                        _showEditBioDialog(context, vm),
+                                    onPressed: () async {
+                                      final newBio = await EditBioDialog.show(
+                                        context,
+                                        initial: vm.profile.bio,
+                                      );
+                                      if (newBio != null) {
+                                        vm.updateBio(newBio);
+                                      }
+                                    },
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: Theme.of(
                                         context,
@@ -146,13 +151,17 @@ class ProfilePage extends StatelessWidget {
                                       ),
                                     ),
                                     child: const Padding(
-                                      padding: EdgeInsetsGeometry.symmetric(
+                                      padding: EdgeInsets.symmetric(
                                         horizontal: 16,
                                         vertical: 8,
                                       ),
                                       child: Text('프로필 수정'),
                                     ),
                                   ),
+                                  const SizedBox(height: 24),
+                                  InterestCard(interests: vm.interests),
+                                  const SizedBox(height: 24),
+                                  BadgeCard(badges: vm.badges),
                                 ],
                               ),
                             ),
@@ -167,78 +176,6 @@ class ProfilePage extends StatelessWidget {
           );
         },
       ),
-    );
-  }
-
-  //TODO: 모바일 레이아웃용
-
-  // List<Widget> _buildContent(
-  //   ProfileModel profile,
-  //   double avatarSize,
-  //   ProfileViewmodel vm,
-  //   BuildContext context,
-  // ) {
-  //   return [
-  //     ProfileAvatar(avatarUrl: profile.avatarUrl, size: avatarSize),
-  //     SizedBox(width: 24, height: 24),
-  //     Expanded(
-  //       child: Column(
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           Text(
-  //             profile.username,
-  //             style: Theme.of(context).textTheme.headlineMedium,
-  //           ),
-  //           SizedBox(height: 8),
-  //           Text(profile.bio),
-  //           SizedBox(height: 16),
-  //           Row(
-  //             children: [
-  //               ProfileStat(label: '팔로워', count: int.parse(profile.followers)),
-  //               SizedBox(height: 16),
-  //               ProfileStat(label: '팔로윙', count: int.parse(profile.following)),
-  //             ],
-  //           ),
-  //           SizedBox(height: 24),
-  //           ElevatedButton(
-  //             onPressed: () => _showEditBioDialog(context, vm),
-  //             child: Text('프로필 수정'),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   ];
-  // }
-
-  void _showEditBioDialog(BuildContext context, ProfileViewmodel vm) {
-    final TextEditingController controller = TextEditingController(
-      text: vm.profile.bio,
-    );
-    showDialog(
-      context: context,
-      builder: (_) {
-        return AlertDialog(
-          title: Text('자기소개 수정'),
-          content: TextField(
-            controller: controller,
-            maxLines: 3,
-            decoration: InputDecoration(hintText: '새로운 자기 소개를 입력하세요'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('취소'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                vm.updateBio(controller.text);
-                Navigator.of(context).pop();
-              },
-              child: Text('저장'),
-            ),
-          ],
-        );
-      },
     );
   }
 }

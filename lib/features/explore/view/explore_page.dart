@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paperlog_front/features/explore/widgets/explore_search_input.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/explore_viewmodel.dart';
 import '../widgets/paper_card.dart';
@@ -24,7 +25,7 @@ class _ExplorePageState extends State<ExplorePage> {
     super.initState();
     _searchController = TextEditingController(text: widget.initialQuery);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ExploreViewmodel>().search(widget.initialQuery);
+      context.read<ExploreViewModel>().search(widget.initialQuery);
     });
   }
 
@@ -36,6 +37,7 @@ class _ExplorePageState extends State<ExplorePage> {
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<MainViewModel>();
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: PreferredSize(
@@ -47,35 +49,21 @@ class _ExplorePageState extends State<ExplorePage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (context.watch<MainViewModel>().isSidebarOpen) SidebarWidget(),
-            VerticalDivider(
+            const SidebarWidget(),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 280),
+              curve: Curves.easeInOutCubic,
               width: 1,
-              thickness: 1,
-              color: Theme.of(context).dividerColor,
+              color: vm.isSidebarOpen
+                  ? Theme.of(context).dividerColor
+                  : Colors.transparent,
             ),
             Expanded(
               child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: '논문을 검색해 보세요',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        suffixIcon: const Icon(Icons.search),
-                      ),
-                      textInputAction: TextInputAction.search,
-                      onSubmitted: (q) {
-                        final query = q.trim();
-                        context.read<ExploreViewmodel>().search(query);
-                      },
-                    ),
-                  ),
+                  ExploreSearchInput(controller: _searchController),
                   Expanded(
-                    child: Consumer<ExploreViewmodel>(
+                    child: Consumer<ExploreViewModel>(
                       builder: (_, vm, __) {
                         if (!vm.hasSearched) {
                           final recs = Paper.sampleList();

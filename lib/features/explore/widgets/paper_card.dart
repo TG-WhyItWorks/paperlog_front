@@ -1,63 +1,182 @@
 import 'package:flutter/material.dart';
+import 'package:paperlog_front/features/library/widgets/save_bookmark_dialog.dart';
 import '../../../core/models/paper_model.dart';
+import '../../../shared/prefs/date_formatting.dart' as df;
+import '../../../shared/prefs/prefs_provider.dart' as prefs;
+import 'package:provider/provider.dart';
+import 'package:paperlog_front/features/paper/widgets/like_button.dart';
 
 class PaperCard extends StatelessWidget {
-  final Paper paper;
   const PaperCard({required this.paper, Key? key}) : super(key: key);
+  final Paper paper;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadiusGeometry.circular(8),
+    final theme = Theme.of(context);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.dividerColor),
       ),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              paper.title,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(paper.summary, maxLines: 3, overflow: TextOverflow.ellipsis),
-            if (paper.tags.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                children: paper.tags
-                    .map(
-                      (tag) => Chip(
-                        label: Text(tag, style: TextStyle(fontSize: 12)),
-                      ),
-                    )
-                    .toList(),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () =>
+            Navigator.of(context).pushNamed('/paper', arguments: paper.id),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              //상단: 날짜와 카테고리
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _DateBadge(text: _dateText(context, paper)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.end,
+                      children: paper.fields
+                          .take(5)
+                          .map((t) => _TagPill(t))
+                          .toList(),
+                    ),
+                  ),
+                ],
               ),
-            ],
-            if (paper.recommendationReason.isNotEmpty) ...[
               const SizedBox(height: 8),
+
+              //논문 제목
               Text(
-                '추천 이유: ${paper.recommendationReason}',
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-            ],
-            if (paper.imageUrl.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: Image.network(
-                  paper.imageUrl,
-                  height: 100,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+                paper.title,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: theme.colorScheme.primary,
+                  height: 1.2,
                 ),
               ),
+              const SizedBox(height: 8),
+
+              //논문 저자
+              if (paper.authors.isNotEmpty)
+                Text(
+                  paper.authors.join(', '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall,
+                ),
+              const SizedBox(height: 10),
+
+              //논문 요약
+              if (paper.abstractText.isNotEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                  ),
+                  child: Text(
+                    paper.abstractText,
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+              const SizedBox(height: 10),
+
+              //하단의 액션 아이콘
+              Row(
+                children: [
+                  _BookmarkButton(
+                    onTap: () => SaveBookmarkDialog.show(context, paper: paper),
+                  ),
+                  const SizedBox(width: 8),
+                  LikeButton(
+                    paperId: paper.id,
+                    initialCount: paper.likeCount, // Paper.likeCount는 int(널X)
+                    initialLiked: paper.isLiked ?? false,
+                  ),
+                ],
+              ),
             ],
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  String _dateText(BuildContext context, Paper p) {
+    DateTime? dt = p.publishedAt;
+
+    if (dt == null) {
+      final y = int.tryParse(p.year);
+      if (y != null) dt = DateTime(y, 1, 1);
+    }
+    if (dt == null) return '';
+
+    final opt = context.read<prefs.PrefsProvider>().dateFormat;
+    return df.formatDate(dt, opt);
+  }
+}
+
+class _DateBadge extends StatelessWidget {
+  const _DateBadge({required this.text});
+  final String text;
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        border: Border.all(color: t.dividerColor),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(text, style: t.textTheme.labelMedium),
+    );
+  }
+}
+
+class _TagPill extends StatelessWidget {
+  const _TagPill(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: t.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(label, style: t.textTheme.labelSmall),
+    );
+  }
+}
+
+class _BookmarkButton extends StatelessWidget {
+  const _BookmarkButton({required this.onTap});
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    return TextButton.icon(
+      onPressed: onTap,
+      style: TextButton.styleFrom(foregroundColor: t.colorScheme.onSurface),
+      icon: const Icon(Icons.bookmark_border),
+      label: Row(
+        children: [
+          Text('Bookmark'),
+          SizedBox(width: 2),
+          Icon(Icons.keyboard_arrow_down, size: 18),
+        ],
       ),
     );
   }

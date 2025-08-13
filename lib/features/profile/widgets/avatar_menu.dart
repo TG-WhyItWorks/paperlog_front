@@ -46,6 +46,7 @@ class AvatarMenu extends StatelessWidget {
               if (!auth.isLoggedIn) ...[
                 const PopupMenuItem(value: 'login', child: Text('로그인/회원가입')),
                 const PopupMenuItem(value: 'settings', child: Text('설정')),
+                const PopupMenuItem(value: 'profile', child: Text('내 프로필')),
               ] else ...[
                 const PopupMenuItem(value: 'profile', child: Text('내 프로필')),
                 const PopupMenuItem(value: 'settings', child: Text('설정')),

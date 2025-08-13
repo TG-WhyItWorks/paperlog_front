@@ -3,24 +3,20 @@ import 'package:http/http.dart' as http;
 import '../../../core/models/user_model.dart';
 import '../../../core/services/token_storage.dart';
 import 'package:flutter/foundation.dart';
+import '../../../core/config/api_config.dart';
 
 class AuthService {
-  final String baseUrl = 'https://e173e74c5543.ngrok-free.app/auth';
   final _tokenStorage = TokenStorage();
 
-  Map<String, String> _baseHeaders() => {
-    'Content-Type': 'application/json',
-    // ngrok 경고 페이지 우회
-    'ngrok-skip-browser-warning': 'true',
-  };
+  Map<String, String> _baseHeaders() => ApiConfig.baseHeaders();
 
   Future<UserModel> loginWithGoogle({
     String? accessToken,
     required String idToken,
   }) async {
-    final uri = Uri.parse('$baseUrl/google');
+    final uri = ApiConfig.uri('/auth/google');
     try {
-      debugPrint('[AUTH] POST $uri');
+      ApiConfig.logReq('AUTH POST', uri);
       final resp = await http
           .post(
             uri,
@@ -62,7 +58,7 @@ class AuthService {
     }
   }
 
-  // 예시) 인증 필요한 API 호출 시 사용할 헤더
+  // 인증 필요한 API 호출 시 사용할 헤더
   Future<Map<String, String>> _authHeaders() async {
     final at = await _tokenStorage.readAccessToken();
     if (at == null || at.isEmpty) {
@@ -71,12 +67,12 @@ class AuthService {
     return {..._baseHeaders(), 'Authorization': 'Bearer $at'};
   }
 
-  // 예시) 프로필 가져오기 (401 나오면 refresh 로직 추가 가능)
+  // 프로필 가져오기 (401 나오면 refresh 고려)
   Future<UserModel> fetchProfile() async {
-    final uri = Uri.parse('$baseUrl/me');
+    final uri = ApiConfig.uri('/auth/me');
     final resp = await http.get(uri, headers: await _authHeaders());
     if (resp.statusCode == 401) {
-      // 필요하면 여기서 refresh() 호출 후 1회 재시도하는 로직을 넣으세요.
+      // 필요하면 여기서 refresh() 호출 후 1회 재시도하는 로직
       throw Exception('Unauthorized');
     }
     if (resp.statusCode != 200) {
@@ -88,11 +84,11 @@ class AuthService {
     return UserModel.fromJson(data['user']);
   }
 
-  // 선택) 토큰 갱신 예시 (백엔드에 /auth/refresh가 있을 때)
+  // 토큰 갱신 (백엔드에 /auth/refresh가 있을 때)
   Future<void> refresh() async {
     final rt = await _tokenStorage.readRefreshToken();
     if (rt == null || rt.isEmpty) return;
-    final uri = Uri.parse('$baseUrl/refresh');
+    final uri = ApiConfig.uri('/auth/refresh');
     final resp = await http.post(
       uri,
       headers: _baseHeaders(),
@@ -108,13 +104,10 @@ class AuthService {
   }
 
   Future<UserModel> loginWithEmail(String email, String password) async {
-    final uri = Uri.parse('$baseUrl/email');
+    final uri = ApiConfig.uri('/auth/email');
     final resp = await http.post(
       uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
-      },
+      headers: ApiConfig.baseHeaders(),
       body: json.encode({'email': email, 'password': password}),
     );
 
@@ -127,8 +120,8 @@ class AuthService {
 
   Future<void> logout() async {
     try {
-      final uri = Uri.parse('$baseUrl/logout');
-      await http.post(uri, headers: {'Content-Type': 'application/json'});
+      final uri = ApiConfig.uri('/auth/logout');
+      await http.post(uri, headers: ApiConfig.baseHeaders());
     } finally {
       await _tokenStorage.clear();
     }

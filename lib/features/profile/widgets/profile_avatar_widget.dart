@@ -9,7 +9,7 @@ class ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final url = (avatarUrl ?? '').trim();
+    final url = avatarUrl.trim();
 
     if (url.isEmpty) {
       return CircleAvatar(radius: size / 2, child: const Icon(Icons.person));

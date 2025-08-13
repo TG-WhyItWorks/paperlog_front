@@ -4,6 +4,7 @@ class UserModel {
   final String email;
   final String? avatarUrl;
 
+  //인증 사용자
   UserModel({
     required this.id,
     required this.username,
@@ -16,7 +17,7 @@ class UserModel {
       id: json['id'] as int,
       username: json['username'] as String,
       email: json['email'] as String,
-      avatarUrl: json['avartarUrl'] as String?,
+      avatarUrl: (json['avatarUrl'] ?? json['avatarUrl']) as String?,
     );
   }
 
@@ -25,7 +26,7 @@ class UserModel {
       'id': id,
       'username': username,
       'email': email,
-      if (avatarUrl != null) 'avartarUrl': avatarUrl,
+      if (avatarUrl != null) 'avatarUrl': avatarUrl,
     };
   }
 }

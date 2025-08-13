@@ -19,6 +19,7 @@ class AuthViewModel extends ChangeNotifier {
   AuthStatus _status = AuthStatus.idle;
   String? _errorMessage;
   UserModel? _user;
+  int? get userId => _user?.id;
 
   AuthStatus get status => _status;
   String? get errorMessage => _errorMessage;
@@ -46,15 +47,14 @@ class AuthViewModel extends ChangeNotifier {
             '웹에서는 renderButton/signInSilently를 통해서만 idToken이 발급됩니다.',
           );
         }
-
-        debugPrint('[GSI] idToken len=${idToken?.length} → POST /auth/google');
+        //debugPrint('[GSI] idToken len=${idToken?.length} → POST /auth/google');
 
         _user = await _authService.loginWithGoogle(
           accessToken: accessToken ?? '',
           idToken: idToken!,
         );
 
-        debugPrint('[GSI] backend OK: ${_user?.email}');
+        //debugPrint('[GSI] backend OK: ${_user?.email}');
         _status = AuthStatus.authenticated;
       } catch (e) {
         _errorMessage = e.toString();
@@ -63,9 +63,8 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
     });
 
-    // 앱 시작 시: 기존 세션/One Tap 시도 (웹에서 idToken을 받을 수 있는 경로)
-    _googleSignIn
-        .signInSilently(); // 웹 권장 흐름. :contentReference[oaicite:2]{index=2}
+    // 앱 시작 시: 기존 세션/One Tap 시도
+    _googleSignIn.signInSilently();
   }
 
   Future<void> signInWithGoogle() async {
@@ -75,11 +74,8 @@ class AuthViewModel extends ChangeNotifier {
 
     try {
       if (kIsWeb) {
-        // 웹은 커스텀 버튼 onPressed로 signIn()을 호출하면 idToken이 없음 (경고 로그가 뜨는 이유)
-        // 반드시 renderButton 위젯을 사용해야 함.
         throw Exception('웹에서는 구글 제공 버튼(renderButton)으로 로그인하세요.');
       } else {
-        // 모바일/데스크톱은 기존 방식 사용
         final account = await _googleSignIn.signIn();
         if (account == null) {
           _status = AuthStatus.unauthenticated;
@@ -91,30 +87,6 @@ class AuthViewModel extends ChangeNotifier {
     }
     notifyListeners();
   }
-
-  // Future<void> signInWithGoogle() async {
-  //   _status = AuthStatus.loading;
-  //   notifyListeners();
-
-  //   try {
-  //     final account = await _googleSignIn.signIn();
-  //     if (account == null) {
-  //       // 사용자가 팝업을 닫은 경우
-  //       _status = AuthStatus.unauthenticated;
-  //     } else {
-  //       final auth = await account.authentication;
-  //       _user = await _authService.loginWithGoogle(
-  //         accessToken: auth.accessToken!,
-  //         idToken: auth.idToken!,
-  //       );
-  //       _status = AuthStatus.authenticated;
-  //     }
-  //   } catch (e) {
-  //     _errorMessage = e.toString();
-  //     _status = AuthStatus.error;
-  //   }
-  //   notifyListeners();
-  // }
 
   Future<void> signInWithEmail(String email, String password) async {
     _status = AuthStatus.loading;
