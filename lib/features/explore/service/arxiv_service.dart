@@ -1,27 +1,22 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../core/models/paper_model.dart';
-import 'package:flutter/foundation.dart';
 import '../../../core/config/api_config.dart';
 
 class ArxivService {
-  // 프록시 서버 엔드 포인트
-  static const _host = 'daf1d4db1de5.ngrok-free.app';
-  static const _path = '/api/arxiv';
-
   Map<String, String> _headers() => {
     ...ApiConfig.baseHeaders(json: false),
     'Accept': 'application/json',
   };
 
   Future<List<Paper>> fetchPapers(String query) async {
-    final uri = ApiConfig.uri('api/arxiv', {'query': query});
+    final uri = ApiConfig.uri('/api/arxiv', {'query': query});
     ApiConfig.logReq('[ARXIV] GET', uri);
 
     final resp = await http
         .get(uri, headers: _headers())
         .timeout(const Duration(seconds: 15));
-    debugPrint('[ARXIV] status=${resp.statusCode} len=${resp.body.length}');
+    //debugPrint('[ARXIV] status=${resp.statusCode} len=${resp.body.length}');
 
     if (resp.statusCode != 200) {
       throw Exception('Failed to load papers: ${resp.statusCode}');

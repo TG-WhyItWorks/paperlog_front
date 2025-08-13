@@ -17,6 +17,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final vm = context.watch<MainViewModel>();
     return Scaffold(
+      //헤더
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
@@ -27,6 +28,7 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           Expanded(
             child: Row(
+              //사이드바
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SidebarWidget(),
@@ -38,12 +40,15 @@ class _MainScreenState extends State<MainScreen> {
                       ? Theme.of(context).dividerColor
                       : Colors.transparent,
                 ),
+
+                //본문
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        //타이틀
                         const SizedBox(height: 24),
                         Text(
                           'Recommended Papers',
@@ -54,6 +59,8 @@ class _MainScreenState extends State<MainScreen> {
                               ),
                         ),
                         const SizedBox(height: 16),
+
+                        //추천 논문 보여주기
                         Expanded(
                           child: ListView(
                             padding: EdgeInsets.zero,

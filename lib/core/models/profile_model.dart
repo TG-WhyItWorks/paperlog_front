@@ -6,6 +6,7 @@ class ProfileModel {
   final int followers;
   final int following;
 
+  //사용자 프로필
   ProfileModel({
     required this.avatarUrl,
     required this.username,

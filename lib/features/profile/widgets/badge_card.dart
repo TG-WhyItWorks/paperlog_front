@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:paperlog_front/core/models/profile_model.dart';
-import '../viewmodel/profile_viewmodel.dart';
+import 'package:paperlog_front/features/profile/widgets/profile_card_shell.dart';
 
 class BadgeCard extends StatelessWidget {
   final List<BadgeModel> badges;
@@ -8,8 +8,7 @@ class BadgeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _cardShell(
-      context,
+    return ProfileCardShell(
       title: '뱃지',
       child: Column(
         children: badges.map((b) {
@@ -52,34 +51,6 @@ class BadgeCard extends StatelessWidget {
             ),
           );
         }).toList(),
-      ),
-    );
-  }
-
-  Widget _cardShell(
-    BuildContext context, {
-    String? title,
-    required Widget child,
-  }) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4)),
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (title != null) ...[
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 12),
-          ],
-          child,
-        ],
       ),
     );
   }

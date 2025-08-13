@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in_web/google_sign_in_web.dart';
 import 'package:provider/provider.dart';
-import '../viewmodel/auth_viewmodel.dart';
+
 import '../../dashboard/widgets/header_widget.dart';
 import '../../dashboard/widgets/sidebar_widget.dart';
-import 'package:paperlog_front/features/dashboard/viewmodel/dashboard_viewmodel.dart';
+import '../widgets/google_signin_button.dart';
 
-import 'package:google_sign_in_web/web_only.dart' as web;
+import '../viewmodel/auth_viewmodel.dart';
+import '../../dashboard/viewmodel/dashboard_viewmodel.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -40,7 +40,9 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.of(context).pushReplacementNamed('/');
       });
     }
+
     return Scaffold(
+      //헤더 위젯
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
@@ -51,12 +53,7 @@ class _LoginPageState extends State<LoginPage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            //   if (context.watch<MainViewModel>().isSidebarOpen) SidebarWidget(),
-            //   VerticalDivider(
-            //     width: 1,
-            //     thickness: 1,
-            //     color: Theme.of(context).dividerColor,
-            //   ),
+            //사이드바 위젯
             const SidebarWidget(),
             AnimatedContainer(
               duration: const Duration(milliseconds: 280),
@@ -66,58 +63,26 @@ class _LoginPageState extends State<LoginPage> {
                   ? Theme.of(context).dividerColor
                   : Colors.transparent,
             ),
+            //본문
             Expanded(
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 400),
+                  constraints: const BoxConstraints(maxWidth: 420),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      //제목
                       Text(
                         'Sign in to PaperLog',
                         style: Theme.of(context).textTheme.displaySmall,
                       ),
                       const SizedBox(height: 32),
 
-                      if (kIsWeb)
-                        web.renderButton(
-                          configuration: GSIButtonConfiguration(
-                            type: GSIButtonType.standard,
-                            theme: GSIButtonTheme.filledBlue,
-                            size: GSIButtonSize.large,
-                            text: GSIButtonText.signinWith,
-                            shape: GSIButtonShape.pill,
-                            logoAlignment: GSIButtonLogoAlignment.center,
-                            minimumWidth: 300,
-                          ),
-                        )
-                      else
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black87,
-                            minimumSize: const Size.fromHeight(48),
-                            side: const BorderSide(color: Colors.grey),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                          icon: Image.asset(
-                            'assets/images/google_logo.png',
-                            height: 24,
-                            width: 24,
-                          ),
-                          onPressed: () async {
-                            await authVm.signInWithGoogle();
-                          },
-                          label: const Text(
-                            'Sign in with Google',
-                            style: TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                        ),
-
+                      //구글 로그인 버튼
+                      const GoogleSignInButton(),
                       const SizedBox(height: 24),
 
+                      //OR 구분 버튼
                       Row(
                         children: [
                           const Expanded(child: Divider()),
@@ -133,6 +98,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 24),
 
+                      //이메일 아이디
                       TextField(
                         controller: _emailCtrl,
                         decoration: InputDecoration(
@@ -144,6 +110,8 @@ class _LoginPageState extends State<LoginPage> {
                         keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 16),
+
+                      //이메일 비밀번호
                       TextField(
                         controller: _pwCtrl,
                         decoration: InputDecoration(
@@ -156,12 +124,13 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 12),
 
+                      //비번 찾기
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           TextButton(
                             onPressed: () {
-                              //TODO: Forgot password flow
+                              //TODO: 비번찾기 로직
                             },
                             child: const Text('Forgot password?'),
                           ),
@@ -169,6 +138,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 12),
 
+                      //로그인 버튼
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -189,6 +159,8 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       const SizedBox(height: 16),
+
+                      //회원가입
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

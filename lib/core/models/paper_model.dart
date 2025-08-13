@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'blog_post_model.dart';
 
 class Paper {
   final String id;
@@ -11,7 +12,7 @@ class Paper {
   final DateTime? publishedAt;
   final String translatedAbstract;
   final String blogSummary;
-  final List<dynamic> relatedBlogs;
+  final List<BlogPost> relatedBlogs;
   final String? doi;
   final int likeCount;
   final bool? isLiked;
@@ -44,7 +45,7 @@ class Paper {
     DateTime? publishedAt,
     String? translatedAbstract,
     String? blogSummary,
-    List<dynamic>? relatedBlogs,
+    List<BlogPost>? relatedBlogs,
     String? doi,
     int? likeCount,
     bool? isLiked,
@@ -60,7 +61,7 @@ class Paper {
       publishedAt: publishedAt ?? this.publishedAt,
       translatedAbstract: translatedAbstract ?? this.translatedAbstract,
       blogSummary: blogSummary ?? this.blogSummary,
-      relatedBlogs: relatedBlogs ?? List<dynamic>.from(this.relatedBlogs),
+      relatedBlogs: relatedBlogs ?? List<BlogPost>.from(this.relatedBlogs),
       doi: doi ?? this.doi,
       likeCount: likeCount ?? this.likeCount,
       isLiked: isLiked ?? this.isLiked,
@@ -80,7 +81,7 @@ class Paper {
       if (v is int) return v;
       if (v is String) return int.tryParse(v) ?? fb;
       return fb;
-    } // ⬇️ published 파싱 (여러 키 대응 + epoch 방어)
+    }
 
     final raw =
         json['published'] ?? json['publishDate'] ?? json['published_at'] ?? '';
@@ -130,9 +131,7 @@ class Paper {
       doi: (json['doi'] == null) ? null : json['doi'].toString(),
       likeCount: _i(json['like_count']),
       isLiked: (json['is_liked'] is bool) ? json['is_liked'] as bool : null,
-      relatedBlogs: (json['reviews'] is List)
-          ? json['reviews'] as List
-          : const [],
+      relatedBlogs: blogs,
     );
   }
 
@@ -185,30 +184,5 @@ class Paper {
         isLiked: null, // '좋아요'를 누르지 않은 상태
       ),
     ];
-  }
-}
-
-class BlogPost {
-  final String title;
-  final String url; // 빈 문자열 허용 (없을 수 있음)
-  final String excerpt;
-  final String? imageUrl;
-
-  BlogPost({
-    required this.title,
-    required this.url,
-    required this.excerpt,
-    this.imageUrl,
-  });
-
-  factory BlogPost.fromJson(Map<String, dynamic> json) {
-    String _s(dynamic v, [String fb = '']) => v?.toString() ?? fb;
-
-    return BlogPost(
-      title: _s(json['title'], 'Blog'),
-      url: _s(json['url']), // 없으면 ''이 들어감
-      excerpt: _s(json['excerpt']),
-      imageUrl: json['imageUrl']?.toString() ?? json['image_url']?.toString(),
-    );
   }
 }

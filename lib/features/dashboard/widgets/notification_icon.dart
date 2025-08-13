@@ -21,7 +21,7 @@ class NotificationIcon extends StatelessWidget {
                 color: Theme.of(context).iconTheme.color,
               ),
               onPressed: () {
-                //RenderBox로 아이콘 위치 계산
+                //아이콘 위치를 기준으로 컨텍스트 메뉴 표시
                 final RenderBox button =
                     btnContext.findRenderObject() as RenderBox;
                 final overlay =

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:paperlog_front/features/paper/widgets/paper_breadcrumb.dart';
+import 'package:paperlog_front/features/paper/widgets/paper_header.dart';
+import 'package:paperlog_front/features/paper/widgets/paper_tabs.dart';
 import 'package:provider/provider.dart';
 import '../../dashboard/widgets/header_widget.dart';
 import '../../dashboard/widgets/sidebar_widget.dart';
@@ -23,6 +26,11 @@ class _PaperDetailedPageState extends State<PaperDetailPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<PaperDetailViewModel>().loadDetail(widget.paperId);
+    });
   }
 
   @override
@@ -66,96 +74,50 @@ class _PaperDetailedPageState extends State<PaperDetailPage>
   }
 
   Widget _buildContent(BuildContext context, PaperDetailViewModel vm) {
-    final detail = vm.detail;
+    final detail = vm.detail!;
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pushNamed('/'),
-                child: const Text('Home'),
-              ),
-              const Text(' / '),
-              const Text(
-                'Paper Details',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
+          const PaperBreadcrumb(),
           const SizedBox(height: 16),
-          Text(
-            detail!.title,
-            style: Theme.of(
-              context,
-            ).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Authors: ${detail.authors.join(', ')} | Published: ${detail.year} | Fields: ${detail.fields.join(', ')}',
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
 
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: () => _launchUrl(detail.pdfUrl),
-            icon: const Icon(Icons.download_rounded),
-            label: const Text('Download Paper'),
+          // 제목/메타/다운로드
+          PaperHeader(
+            title: detail.title,
+            authors: detail.authors,
+            year: detail.year,
+            fields: detail.fields,
+            pdfUrl: detail.pdfUrl,
           ),
 
           const SizedBox(height: 24),
-          TabBar(
-            controller: _tabController,
-            labelColor: Theme.of(context).colorScheme.primary,
-            unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color,
-            indicatorColor: Theme.of(context).colorScheme.primary,
-            tabs: const [
-              Tab(text: 'Abstract'),
-              Tab(text: 'Korean Translation'),
-              Tab(text: 'Blog Summary'),
-            ],
+
+          //(추상/번역/요약) 탭
+          PaperTabs(
+            abstractText: detail.abstractText,
+            translatedAbstract: detail.translatedAbstract,
+            blogSummary: detail.blogSummary,
+            height: 300,
           ),
 
-          SizedBox(
-            height: 300,
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                SingleChildScrollView(
-                  padding: EdgeInsets.all(16),
-                  child: Text(detail.abstractText),
-                ),
-                SingleChildScrollView(
-                  padding: EdgeInsets.all(16),
-                  child: Text(detail.translatedAbstract),
-                ),
-                SingleChildScrollView(
-                  padding: EdgeInsets.all(16),
-                  child: Text(detail.blogSummary),
-                ),
-              ],
-            ),
-          ),
           const SizedBox(height: 32),
+
+          //블로그 추천
           Text(
             'Related Blog Posts',
             style: Theme.of(
               context,
             ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
           ),
+
           const SizedBox(height: 12),
           ...detail.relatedBlogs.map((b) => BlogPostCard(blog: b)),
-
           const SizedBox(height: 12),
           RecommendedPapersList(),
         ],
       ),
     );
-  }
-
-  void _launchUrl(String url) {
-    //url_luancher 로 구현
   }
 }

@@ -47,15 +47,14 @@ class AuthViewModel extends ChangeNotifier {
             '웹에서는 renderButton/signInSilently를 통해서만 idToken이 발급됩니다.',
           );
         }
-
-        debugPrint('[GSI] idToken len=${idToken?.length} → POST /auth/google');
+        //debugPrint('[GSI] idToken len=${idToken?.length} → POST /auth/google');
 
         _user = await _authService.loginWithGoogle(
           accessToken: accessToken ?? '',
           idToken: idToken!,
         );
 
-        debugPrint('[GSI] backend OK: ${_user?.email}');
+        //debugPrint('[GSI] backend OK: ${_user?.email}');
         _status = AuthStatus.authenticated;
       } catch (e) {
         _errorMessage = e.toString();
@@ -64,9 +63,8 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
     });
 
-    // 앱 시작 시: 기존 세션/One Tap 시도 (웹에서 idToken을 받을 수 있는 경로)
-    _googleSignIn
-        .signInSilently(); // 웹 권장 흐름. :contentReference[oaicite:2]{index=2}
+    // 앱 시작 시: 기존 세션/One Tap 시도
+    _googleSignIn.signInSilently();
   }
 
   Future<void> signInWithGoogle() async {

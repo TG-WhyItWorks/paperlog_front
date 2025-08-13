@@ -6,6 +6,7 @@ import '../../library/viewmodel/library_viewmodel.dart';
 import '../../auth/viewmodel/auth_viewmodel.dart';
 import 'dart:math' as math;
 import '../../../core/models/paper_model.dart';
+import '../../../core/models/folder_model.dart';
 
 class SidebarWidget extends StatefulWidget {
   const SidebarWidget({Key? key}) : super(key: key);
@@ -16,6 +17,7 @@ class SidebarWidget extends StatefulWidget {
 }
 
 class _SideBarWidgetState extends State<SidebarWidget> {
+  //새 폴더 생성 다이얼로그
   Future<void> _addFolder(BuildContext context) async {
     final libVm = context.read<LibraryViewModel>();
     final auth = context.read<AuthViewModel>();
@@ -183,27 +185,27 @@ class _SideBarWidgetState extends State<SidebarWidget> {
 
                         const SizedBox(height: 8),
 
-                        if ((main.recentPapers?.isNotEmpty ?? false)) ...[
+                        if ((main.recentPapers.isNotEmpty)) ...[
                           Text(
                             '최근 본 논문',
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 8),
-                          ...main.recentPapers!
+                          ...main.recentPapers
                               .take(3)
                               .map((p) => _recentPaperTile(context, p))
                               .toList(),
                           const SizedBox(height: 12),
                         ],
-                        if ((main.recentBlogs?.isNotEmpty ?? false)) ...[
+                        if ((main.recentBlogs.isNotEmpty)) ...[
                           Text(
                             '최근 본 블로그 포스트',
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 8),
-                          ...main.recentBlogs!
+                          ...main.recentBlogs
                               .take(3)
                               .map((b) => _recentBlogTile(context, b))
                               .toList(),
@@ -317,9 +319,9 @@ class _SideBarWidgetState extends State<SidebarWidget> {
           context,
         ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
       ),
-      subtitle: (p.authors != null && p.authors!.isNotEmpty)
+      subtitle: p.authors.isNotEmpty
           ? Text(
-              p.authors!.join(', '),
+              p.authors.join(', '),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             )

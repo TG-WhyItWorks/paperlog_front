@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/models/paper_detail_model.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/models/blog_post_model.dart';
 
 class BlogPostCard extends StatelessWidget {
   final BlogPost blog;

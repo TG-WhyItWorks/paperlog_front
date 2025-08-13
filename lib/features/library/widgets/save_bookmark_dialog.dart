@@ -109,17 +109,14 @@ class SaveBookmarkDialog extends StatelessWidget {
                   ...folders.map((e) {
                     final f = e.f;
                     final depth = e.depth;
-                    final checked = vm.isInFolder(paper.id, f.id!);
+                    final checked = vm.isInFolder(paper.id, f.id);
                     return _CheckTile(
                       label: f.name,
                       lockIcon: true, // 우리 폴더는 기본적으로 개인용이니 잠금 표시
                       leftPadding: 16.0 + depth * 16.0,
                       checked: checked,
-                      onChanged: (v) => vm.setInFolder(
-                        paper: paper,
-                        folderId: f.id!,
-                        on: v ?? false,
-                      ),
+                      onChanged: (v) =>
+                          vm.setInFolder(paper: paper, folderId: f.id, on: v),
                     );
                   }),
                 ],

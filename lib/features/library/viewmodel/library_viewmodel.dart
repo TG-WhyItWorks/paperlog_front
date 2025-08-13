@@ -5,9 +5,14 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';
 import '../../../core/models/paper_model.dart';
 import '../../auth/viewmodel/auth_viewmodel.dart';
+import '../../../core/models/folder_model.dart';
+import '../service/folder_service.dart';
+import '../service/private_paper_service.dart';
 
 class LibraryViewModel extends ChangeNotifier {
   final _service = LibraryService();
+  final _folderService = FolderService();
+  final _privatePaperService = PrivatePaperService();
 
   bool isLoading = false;
   String? error;
@@ -57,19 +62,19 @@ class LibraryViewModel extends ChangeNotifier {
   }
 
   // ------------------------------
-  // 액션: 섹션으로 이동(워치리스트/리딩/완료)
+  // 액션: 섹션으로 이동(워치리스트/리딩/완료) - 서버 연동
   // ------------------------------
   Future<void> moveSelectedToSection(LibrarySection section) async {
-    final ids = selectedPaperIds.toSet();
+    final ids = selectedPaperIds.toList();
     if (ids.isEmpty) return;
 
     isLoading = true;
     notifyListeners();
     try {
-      // 서버가 있으면 호출
-      // await _service.movePapersToSection(ids.toList(), section);
+      // 1) 서버 호출
+      await _service.movePapersToSection(ids: ids, section: section);
 
-      // 메모리 갱신
+      // 2) 로컬 상태 갱신
       items = items
           .map(
             (e) => ids.contains(e.paper.id)
@@ -91,7 +96,7 @@ class LibraryViewModel extends ChangeNotifier {
   }
 
   // ------------------------------
-  // 액션: 폴더로 이동
+  // 액션: 폴더로 이동 - 서버 연동
   // ------------------------------
   Future<void> moveSelectedToFolder(String folderId) async {
     final ids = selectedPaperIds.toList();
@@ -100,22 +105,19 @@ class LibraryViewModel extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     try {
-      // 서버가 있으면 호출 (folderId는 숫자면 parse)
-      // final fid = int.tryParse(folderId);
-      // await _service.movePapersToFolder(ids, folderId: fid);
+      // 1) 서버 호출
+      await _folderService.addPapersToFolder(folderId: folderId, paperIds: ids);
 
-      // 폴더 카운트 +n 반영(간단 버전)
-      final uid = _auth?.userId;
-      if (uid != null) {
-        final list = [...(_userFolders[uid] ?? const <LibraryFolder>[])];
-        final idx = list.indexWhere((f) => f.id == folderId);
-        if (idx != -1) {
-          final f = list[idx];
-          list[idx] = f.copyWith(count: f.count + ids.length);
-          _userFolders[uid] = list;
-          _folders = list;
-        }
+      // 2) 로컬 매핑/카운트 반영 (중복 추가 방지)
+      var newlyAdded = 0;
+      for (final pid in ids) {
+        final set = _paperFolderMap.putIfAbsent(pid, () => <String>{});
+        if (set.add(folderId)) newlyAdded += 1;
       }
+      if (newlyAdded > 0) _bumpFolderCount(folderId, newlyAdded);
+
+      // 3) (선택) 서버 카운트 기준으로 동기화하고 싶으면
+      await refreshFolders();
     } catch (e) {
       error = e.toString();
     } finally {
@@ -135,10 +137,21 @@ class LibraryViewModel extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     try {
-      // 서버가 있으면 호출
-      // await _service.deletePapers(ids);
+      // 1) 서버 삭제
+      await _service.deletePapers(ids: ids);
 
-      // 메모리 삭제
+      // 2) (기존) 폴더 카운트/로컬 리스트 갱신
+      final Map<String, int> dec = {}; //folderId -> 감소 개수
+      for (final pid in ids) {
+        final folders = _paperFolderMap.remove(pid);
+        if (folders != null) {
+          for (final fid in folders) {
+            dec[fid] = (dec[fid] ?? 0) + 1;
+          }
+        }
+      }
+      dec.forEach((fid, n) => _bumpFolderCount(fid, -n));
+
       items = items
           .where((e) => !ids.contains(e.paper.id))
           .toList(growable: false);
@@ -159,15 +172,8 @@ class LibraryViewModel extends ChangeNotifier {
     if (uid == null || newName.trim().isEmpty) return;
 
     try {
-      // await _service.renameFolder(folderId: int.tryParse(folderId), name: newName);
-      final list = [...(_userFolders[uid] ?? const <LibraryFolder>[])];
-      final idx = list.indexWhere((f) => f.id == folderId);
-      if (idx != -1) {
-        final f = list[idx];
-        list[idx] = f.copyWith(name: newName);
-        _userFolders[uid] = list;
-        _folders = list;
-      }
+      await _folderService.renameFolder(folderId: folderId, newName: newName);
+      await refreshFolders();
     } catch (e) {
       error = e.toString();
     } finally {
@@ -180,11 +186,14 @@ class LibraryViewModel extends ChangeNotifier {
     if (uid == null) return;
 
     try {
-      // await _service.deleteFolder(folderId: int.tryParse(folderId));
-      final list = [...(_userFolders[uid] ?? const <LibraryFolder>[])];
-      list.removeWhere((f) => f.id == folderId);
-      _userFolders[uid] = list;
-      _folders = list;
+      await _folderService.deleteFolder(folderId: folderId);
+      // 매핑에서 해당 폴더 제거
+      _paperFolderMap.updateAll((_, set) {
+        set.remove(folderId);
+        return set;
+      });
+      _paperFolderMap.removeWhere((_, set) => set.isEmpty);
+      await refreshFolders();
     } catch (e) {
       error = e.toString();
     } finally {
@@ -208,6 +217,12 @@ class LibraryViewModel extends ChangeNotifier {
     _onAuthChanged();
   }
 
+  @override
+  void dispose() {
+    _auth?.removeListener(_onAuthChanged);
+    super.dispose();
+  }
+
   Future<void> init() async {
     await load();
   }
@@ -221,9 +236,29 @@ class LibraryViewModel extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    // 로그인: 사용자별 폴더 반영
-    _folders = _userFolders[uid] ?? const <LibraryFolder>[];
-    notifyListeners();
+    // 로그인: 캐시 없으면 서버에서 로드, 있으면 캐시 반영
+    if (_userFolders.containsKey(uid)) {
+      _folders = _userFolders[uid]!;
+      notifyListeners();
+    } else {
+      // await 불필요: 비동기로 가져오고 UI는 캐시 도착 시 갱신
+      refreshFolders();
+    }
+  }
+
+  /// 서버에서 폴더 목록을 새로 로드하고 바인딩
+  Future<void> refreshFolders() async {
+    final uid = _auth?.userId;
+    if (uid == null) return;
+    try {
+      final list = await _folderService.fetchFolders();
+      _userFolders[uid] = list;
+      _folders = list;
+      notifyListeners();
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+    }
   }
 
   Future<void> load() async {
@@ -270,20 +305,15 @@ class LibraryViewModel extends ChangeNotifier {
     final n = name.trim();
     if (n.isEmpty) return;
     if (_auth?.userId == null) return; // 비로그인 방지
-    final uid = _auth!.userId!;
+
     try {
       isLoading = true;
       notifyListeners();
-      final created = await _service.createFolder(
+      final created = await _folderService.createFolder(
         folderName: n,
         parentFolderId: parentFolderId,
       );
-      final List<LibraryFolder> list = [
-        ...(_userFolders[uid] ?? const <LibraryFolder>[]),
-        created,
-      ];
-      _userFolders[uid] = list;
-      _folders = list;
+      await refreshFolders();
     } catch (e) {
       error = e.toString();
     } finally {
@@ -326,7 +356,7 @@ class LibraryViewModel extends ChangeNotifier {
       error = null;
       notifyListeners();
 
-      final paper = await _service.uploadPrivatePdf(
+      final paper = await _privatePaperService.uploadPrivatePdf(
         filename: file.name,
         bytes: bytes,
         fields: const {'visibility': 'private'},
@@ -353,6 +383,11 @@ class LibraryViewModel extends ChangeNotifier {
         _userFolders[uid] = list;
         _folders = list;
       }
+
+      // 폴더-논문 매핑 반영 → 폴더 트리에서 바로 표시되도록
+      final set = _paperFolderMap.putIfAbsent(paper.id, () => <String>{});
+      set.add(folderIdStr);
+      notifyListeners();
 
       ScaffoldMessenger.of(
         context,
@@ -393,7 +428,7 @@ class LibraryViewModel extends ChangeNotifier {
       error = null;
       notifyListeners();
 
-      final paper = await _service.uploadPrivatePdf(
+      final paper = await _privatePaperService.uploadPrivatePdf(
         filename: file.name,
         bytes: bytes,
         fields: {'visibility': 'private'},
@@ -424,16 +459,32 @@ class LibraryViewModel extends ChangeNotifier {
 
   /// 빠른 리스트(워치/리딩/완료) 지정/해제
   Future<void> setInSection(Paper paper, LibrarySection s, bool on) async {
-    // 세 섹션 중 하나만 허용 (일반적 사용성)
     final quick = {
       LibrarySection.wantToRead,
       LibrarySection.reading,
       LibrarySection.completed,
     };
 
-    // 메모리 반영
+    // 서버 반영 먼저 시도
+    try {
+      if (on) {
+        await _service.movePapersToSection(ids: [paper.id], section: s);
+      } else {
+        // 해제는 'none'으로 보내는 방식(백엔드 계약에 따라 조정)
+        await _service.movePapersToSection(
+          ids: [paper.id],
+          section: LibrarySection.none,
+        );
+      }
+    } catch (e) {
+      error = e.toString();
+      // 실패 시 여기서 return 하면 로컬 상태는 그대로, 필요 시 스낵바 표시
+      notifyListeners();
+      return;
+    }
+
+    // === 아래는 기존 로컬 반영 로직 유지 ===
     if (on) {
-      // 같은 paper의 다른 quick 섹션은 제거
       items = items
           .where((e) {
             if (e.paper.id != paper.id) return true;
@@ -441,7 +492,6 @@ class LibraryViewModel extends ChangeNotifier {
           })
           .toList(growable: true);
 
-      // 같은 섹션으로 항목이 없으면 추가
       final exists = items.any((e) => e.paper.id == paper.id && e.section == s);
       if (!exists) {
         items.insert(
@@ -450,16 +500,10 @@ class LibraryViewModel extends ChangeNotifier {
         );
       }
     } else {
-      // off: 해당 섹션 항목만 제거
       items = items
-          .where((e) {
-            if (e.paper.id != paper.id) return true;
-            return e.section != s;
-          })
+          .where((e) => e.paper.id != paper.id || e.section != s)
           .toList(growable: true);
     }
-
-    // 서버 연동 필요 시 여기에 API 호출 추가
 
     notifyListeners();
   }

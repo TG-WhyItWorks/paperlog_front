@@ -58,7 +58,7 @@ class AuthService {
     }
   }
 
-  // 예시) 인증 필요한 API 호출 시 사용할 헤더
+  // 인증 필요한 API 호출 시 사용할 헤더
   Future<Map<String, String>> _authHeaders() async {
     final at = await _tokenStorage.readAccessToken();
     if (at == null || at.isEmpty) {
@@ -67,12 +67,12 @@ class AuthService {
     return {..._baseHeaders(), 'Authorization': 'Bearer $at'};
   }
 
-  // 예시) 프로필 가져오기 (401 나오면 refresh 로직 추가 가능)
+  // 프로필 가져오기 (401 나오면 refresh 고려)
   Future<UserModel> fetchProfile() async {
     final uri = ApiConfig.uri('/auth/me');
     final resp = await http.get(uri, headers: await _authHeaders());
     if (resp.statusCode == 401) {
-      // 필요하면 여기서 refresh() 호출 후 1회 재시도하는 로직을 넣으세요.
+      // 필요하면 여기서 refresh() 호출 후 1회 재시도하는 로직
       throw Exception('Unauthorized');
     }
     if (resp.statusCode != 200) {
@@ -84,7 +84,7 @@ class AuthService {
     return UserModel.fromJson(data['user']);
   }
 
-  // 선택) 토큰 갱신 예시 (백엔드에 /auth/refresh가 있을 때)
+  // 토큰 갱신 (백엔드에 /auth/refresh가 있을 때)
   Future<void> refresh() async {
     final rt = await _tokenStorage.readRefreshToken();
     if (rt == null || rt.isEmpty) return;

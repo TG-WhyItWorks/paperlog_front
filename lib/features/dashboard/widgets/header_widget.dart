@@ -30,7 +30,7 @@ class _HeaderWidgetState extends State<HeaderWidget> {
   }
 
   @override
-  build(BuildContext context) {
+  Widget build(BuildContext context) {
     final isLight = context.watch<ThemeProvider>().mode == ThemeMode.light;
     final vm = context.watch<MainViewModel>();
     return Container(
@@ -116,7 +116,7 @@ class _HeaderWidgetState extends State<HeaderWidget> {
             label: 'My Blog',
             selected: vm.currentPage == PageType.blog,
             onTap: () {
-              vm.navigationTo(PageType.library);
+              vm.navigationTo(PageType.blog);
               final current = ModalRoute.of(context)?.settings.name;
               if (current != '/blog') {
                 Navigator.of(context).pushNamed('/blog');
@@ -148,7 +148,6 @@ class _HeaderWidgetState extends State<HeaderWidget> {
                   color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                 ),
               ),
-              style: const TextStyle(color: Colors.white),
               textInputAction: TextInputAction.search,
               onChanged: vm.setSearchQuery,
               onSubmitted: (q) {

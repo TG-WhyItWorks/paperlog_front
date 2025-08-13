@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:paperlog_front/core/models/profile_model.dart';
-import '../viewmodel/profile_viewmodel.dart';
+import 'package:paperlog_front/features/profile/widgets/profile_card_shell.dart';
 
 class InterestCard extends StatelessWidget {
   final List<InterestStat> interests;
@@ -9,8 +9,7 @@ class InterestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (interests.isEmpty) {
-      return _cardShell(
-        context,
+      return ProfileCardShell(
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -23,8 +22,7 @@ class InterestCard extends StatelessWidget {
       );
     }
     final maxCount = interests.first.count;
-    return _cardShell(
-      context,
+    return ProfileCardShell(
       title: '관심 영역',
       child: Column(
         children: interests.map((e) {
@@ -61,34 +59,6 @@ class InterestCard extends StatelessWidget {
             ),
           );
         }).toList(),
-      ),
-    );
-  }
-
-  Widget _cardShell(
-    BuildContext context, {
-    String? title,
-    required Widget child,
-  }) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4)),
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (title != null) ...[
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 12),
-          ],
-          child,
-        ],
       ),
     );
   }

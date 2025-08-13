@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paperlog_front/features/explore/widgets/explore_search_input.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/explore_viewmodel.dart';
 import '../widgets/paper_card.dart';
@@ -24,7 +25,7 @@ class _ExplorePageState extends State<ExplorePage> {
     super.initState();
     _searchController = TextEditingController(text: widget.initialQuery);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ExploreViewmodel>().search(widget.initialQuery);
+      context.read<ExploreViewModel>().search(widget.initialQuery);
     });
   }
 
@@ -60,31 +61,9 @@ class _ExplorePageState extends State<ExplorePage> {
             Expanded(
               child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: '논문을 검색해 보세요',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.search),
-                          onPressed: () {
-                            final q = _searchController.text.trim();
-                            context.read<ExploreViewmodel>().search(q);
-                          },
-                        ),
-                      ),
-                      textInputAction: TextInputAction.search,
-                      onSubmitted: (q) {
-                        context.read<ExploreViewmodel>().search(q.trim());
-                      },
-                    ),
-                  ),
+                  ExploreSearchInput(controller: _searchController),
                   Expanded(
-                    child: Consumer<ExploreViewmodel>(
+                    child: Consumer<ExploreViewModel>(
                       builder: (_, vm, __) {
                         if (!vm.hasSearched) {
                           final recs = Paper.sampleList();

@@ -12,7 +12,7 @@ class ApiConfig {
       ? _envBase
       : 'http://localhost:8000';
 
-  // ngrok 경고 우회를 위한 공통 헤더
+  // 공통 헤더 (ngrok 경고 우회 포함)
   static Map<String, String> baseHeaders({bool json = true}) {
     return {
       if (json) 'Content-Type': 'application/json',
@@ -20,7 +20,7 @@ class ApiConfig {
     };
   }
 
-  // 쿼리 파라미터를 포함한 uri (path 설정)
+  // (path, query)로 최종 요청 URI 생성
   static Uri uri(String path, [Map<String, dynamic>? query]) {
     final base = Uri.parse(baseUrl);
     final mergedPath = _join(base.path, path);
@@ -30,14 +30,14 @@ class ApiConfig {
     );
   }
 
-  // path 합치기
+  // path 합치기 (base.path + path)
   static String _join(String a, String b) {
     final left = a.endsWith('/') ? a.substring(0, a.length - 1) : a;
-    final right = b.startsWith('/') ? b : '$b';
+    final right = b.startsWith('/') ? b : '/$b';
     return '$left$right';
   }
 
-  // 디버그 로그
+  // 개발 디버그 로그
   static void logReq(String tag, Uri uri) {
     debugPrint('[$tag] $uri');
   }

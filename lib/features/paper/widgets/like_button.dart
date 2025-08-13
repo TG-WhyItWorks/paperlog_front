@@ -1,6 +1,6 @@
 // lib/shared/widgets/like_button.dart
 import 'package:flutter/material.dart';
-import '../../core/services/like_service.dart'; // 경로 맞춰주세요
+import '../../../core/services/like_service.dart';
 
 class LikeButton extends StatefulWidget {
   final String paperId;

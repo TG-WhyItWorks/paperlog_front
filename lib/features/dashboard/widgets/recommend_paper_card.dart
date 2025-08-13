@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/paper_model.dart';
 import '../../library/widgets/save_bookmark_dialog.dart';
-import 'package:paperlog_front/shared/widgets/like_button.dart';
+import '../../paper/widgets/like_button.dart';
 
 class RecommendPaperCard extends StatelessWidget {
   final Paper paper;
@@ -11,6 +11,7 @@ class RecommendPaperCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    //추천 카드
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -97,7 +98,7 @@ class RecommendPaperCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   LikeButton(
                     paperId: paper.id,
-                    initialCount: paper.likeCount, // Paper.likeCount는 int(널X)
+                    initialCount: paper.likeCount,
                     initialLiked: paper.isLiked ?? false,
                   ),
                 ],
@@ -128,7 +129,7 @@ class RecommendPaperCard extends StatelessWidget {
       ];
       return '${d.day.toString().padLeft(2, '0')} ${months[d.month - 1]} ${d.year}';
     }
-    if (p.year != null) return '${p.year}';
+    if (p.year.isNotEmpty) return p.year;
     return '';
   }
 }
@@ -185,22 +186,6 @@ class _BookmarkButton extends StatelessWidget {
           Icon(Icons.keyboard_arrow_down, size: 18),
         ],
       ),
-    );
-  }
-}
-
-class _LikeButton extends StatelessWidget {
-  const _LikeButton({required this.count, required this.onTap});
-  final VoidCallback onTap;
-  final int count;
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context);
-    return TextButton.icon(
-      onPressed: onTap,
-      style: TextButton.styleFrom(foregroundColor: t.colorScheme.onSurface),
-      icon: const Icon(Icons.thumb_up_alt_outlined),
-      label: Text('$count'),
     );
   }
 }

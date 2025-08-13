@@ -1,29 +1,6 @@
 // lib/core/models/paper_detail_model.dart
 import 'package:intl/intl.dart';
-
-class BlogPost {
-  final String title;
-  final String excerpt;
-  final String url;
-  final String? imageUrl;
-
-  BlogPost({
-    required this.title,
-    required this.excerpt,
-    required this.url,
-    this.imageUrl,
-  });
-
-  factory BlogPost.fromJson(Map<String, dynamic> json) {
-    String _s(dynamic v, [String fb = '']) => v?.toString() ?? fb;
-    return BlogPost(
-      title: _s(json['title'], 'Blog'),
-      excerpt: _s(json['excerpt']),
-      url: _s(json['url']), // 없으면 '' (빈 문자열)
-      imageUrl: json['imageUrl']?.toString() ?? json['image_url']?.toString(),
-    );
-  }
-}
+import 'blog_post_model.dart';
 
 class PaperDetail {
   final String id; // arxiv_id
@@ -32,8 +9,8 @@ class PaperDetail {
   final String year; // "YYYY"
   final List<String> fields; // categories
   final String abstractText; // summary/abstract
-  final String translatedAbstract; // 기본값 제공
-  final String blogSummary; // 기본값 제공
+  final String translatedAbstract;
+  final String blogSummary;
   final String pdfUrl; // link
   final List<BlogPost> relatedBlogs;
 
@@ -42,6 +19,7 @@ class PaperDetail {
   final int likeCount;
   final bool? isLiked;
 
+  // 논문 상세 모델
   PaperDetail({
     required this.id,
     required this.title,

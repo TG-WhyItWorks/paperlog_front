@@ -5,6 +5,7 @@ class NotificationModel {
   final DateTime date;
   bool read;
 
+  // 알림 엔티티 (읽음 상태 포함)
   NotificationModel({
     required this.id,
     required this.title,

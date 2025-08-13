@@ -55,8 +55,8 @@ class PaperLogApp extends StatelessWidget {
         '/explore': (context) {
           final initialQuery =
               ModalRoute.of(context)!.settings.arguments as String? ?? '';
-          return ChangeNotifierProvider<ExploreViewmodel>(
-            create: (_) => ExploreViewmodel()..search(initialQuery),
+          return ChangeNotifierProvider<ExploreViewModel>(
+            create: (_) => ExploreViewModel()..search(initialQuery),
             child: ExplorePage(initialQuery: initialQuery),
           );
         },

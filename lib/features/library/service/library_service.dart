@@ -2,13 +2,15 @@ import 'package:paperlog_front/core/models/paper_model.dart';
 import '../../../core/models/library_models.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'dart:typed_data';
 import '../../../core/services/token_storage.dart';
 import '../../../core/config/api_config.dart';
 
 class LibraryService {
   final _tokenStorage = TokenStorage();
-  Map<String, String> _baseHeaders() => ApiConfig.baseHeaders();
+  Map<String, String> _baseHeaders() => {
+    ...ApiConfig.baseHeaders(),
+    'Accept': 'application/json',
+  };
 
   Future<Map<String, String>> _authHeaders() async {
     final at = await _tokenStorage.readAccessToken();
@@ -19,12 +21,16 @@ class LibraryService {
   Future<List<LibraryItem>> fetchLibrary() async {
     final uri = ApiConfig.uri('/library');
     try {
-      final res = await http.get(uri, headers: await _authHeaders());
+      final res = await http
+          .get(uri, headers: await _authHeaders())
+          .timeout(const Duration(seconds: 15));
       if (res.statusCode == 200) {
         final List data = json.decode(res.body) as List;
         return data.map<LibraryItem>((e) {
           final sectionStr = (e['section'] ?? '').toString();
-          final paperJson = (e['paper'] as Map).cast<String, dynamic>();
+          final paperJson = Map<String, dynamic>.from(
+            e['paper'] as Map<Object?, Object?>,
+          );
           return LibraryItem(
             paper: Paper.fromJson(paperJson),
             section: _parseSection(sectionStr),
@@ -69,65 +75,59 @@ class LibraryService {
     ];
   }
 
-  /// 폴더 생성 (FastAPI: POST /folders)
-  Future<LibraryFolder> createFolder({
-    required String folderName,
-    int? parentFolderId,
-  }) async {
-    final uri = ApiConfig.uri('/folders');
-    final res = await http.post(
-      uri,
-      headers: await _authHeaders(),
-      body: json.encode({
-        'folder_name': folderName,
-        'parent_folder_id': parentFolderId, // null 허용
-      }),
-    );
-    if (res.statusCode != 200 && res.statusCode != 201) {
-      throw Exception('폴더 생성 실패: HTTP ${res.statusCode} ${res.body}');
+  // 백엔드가 기대하는 섹션 문자열로 변환
+  String _sectionToApi(LibrarySection s) {
+    switch (s) {
+      case LibrarySection.wantToRead:
+        return 'wantToRead';
+      case LibrarySection.reading:
+        return 'reading';
+      case LibrarySection.completed:
+        return 'completed';
+      case LibrarySection.myPublications:
+        return 'myPublications';
+      case LibrarySection.private:
+        return 'private';
+      case LibrarySection.none:
+      default:
+        return 'none';
     }
-    final map = json.decode(res.body) as Map<String, dynamic>;
-    return LibraryFolder(
-      id: (map['id'] ?? '').toString(),
-      name: (map['folder_name'] ?? '').toString(),
-      count: (map['count'] is int) ? map['count'] as int : 0,
-      parentId: (map['parent_folder_id'] != null)
-          ? (map['parent_folder_id']).toString()
-          : null,
-    );
   }
 
-  /// Private PDF 업로드 (FastAPI: POST /private-papers/upload)
-  Future<Paper> uploadPrivatePdf({
-    required String filename,
-    required Uint8List bytes,
-    Map<String, String>? fields,
-    int? folderId,
+  /// (서버 연동) 선택 논문들을 주어진 섹션으로 변경
+  /// POST /library/section  (백엔드 라우트가 다르면 여기만 수정)
+  Future<void> movePapersToSection({
+    required List<String> ids,
+    required LibrarySection section,
   }) async {
-    final uri = ApiConfig.uri('/private-papers/upload');
-    final req = http.MultipartRequest('POST', uri);
-    if (fields != null) req.fields.addAll(fields);
-    // 인증/ngrok 헤더 추가
-    final at = await _tokenStorage.readAccessToken();
-    req.headers['ngrok-skip-browser-warning'] = 'true';
-    if (at != null && at.isNotEmpty) {
-      req.headers['Authorization'] = 'Bearer $at';
-    }
-    if (folderId != null) {
-      // 백엔드가 기대하는 키에 맞춰 전달 (예: folder_id)
-      req.fields['folder_id'] = folderId.toString();
-    }
+    final uri = ApiConfig.uri('/library/section');
+    final body = json.encode({
+      'paper_ids': ids,
+      'section': _sectionToApi(section),
+    });
 
-    req.files.add(
-      http.MultipartFile.fromBytes('file', bytes, filename: filename),
-    );
+    final res = await http
+        .post(uri, headers: await _authHeaders(), body: body)
+        .timeout(const Duration(seconds: 15));
 
-    final streamed = await req.send();
-    final res = await http.Response.fromStream(streamed);
-    if (res.statusCode != 200 && res.statusCode != 201) {
-      throw Exception('업로드 실패: HTTP ${res.statusCode}');
+    if (res.statusCode != 200) {
+      throw Exception('섹션 이동 실패: HTTP ${res.statusCode} ${res.body}');
     }
-    final map = json.decode(res.body) as Map<String, dynamic>;
-    return Paper.fromJson(map);
+  }
+
+  /// 선택 논문 삭제 (POST /library/papers/delete) 예시
+  Future<void> deletePapers({required List<String> ids}) async {
+    final uri = ApiConfig.uri('/library/papers/delete');
+    final res = await http
+        .post(
+          uri,
+          headers: await _authHeaders(),
+          body: json.encode({'paper_ids': ids}),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (res.statusCode != 200) {
+      throw Exception('삭제 실패: HTTP ${res.statusCode} ${res.body}');
+    }
   }
 }

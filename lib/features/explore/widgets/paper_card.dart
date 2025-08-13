@@ -4,7 +4,7 @@ import '../../../core/models/paper_model.dart';
 import '../../../shared/prefs/date_formatting.dart' as df;
 import '../../../shared/prefs/prefs_provider.dart' as prefs;
 import 'package:provider/provider.dart';
-import 'package:paperlog_front/shared/widgets/like_button.dart';
+import 'package:paperlog_front/features/paper/widgets/like_button.dart';
 
 class PaperCard extends StatelessWidget {
   const PaperCard({required this.paper, Key? key}) : super(key: key);
@@ -178,22 +178,6 @@ class _BookmarkButton extends StatelessWidget {
           Icon(Icons.keyboard_arrow_down, size: 18),
         ],
       ),
-    );
-  }
-}
-
-class _LikeButton extends StatelessWidget {
-  const _LikeButton({required this.count, required this.onTap});
-  final VoidCallback onTap;
-  final int count;
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context);
-    return TextButton.icon(
-      onPressed: onTap,
-      style: TextButton.styleFrom(foregroundColor: t.colorScheme.onSurface),
-      icon: const Icon(Icons.thumb_up_alt_outlined),
-      label: Text('$count'),
     );
   }
 }
