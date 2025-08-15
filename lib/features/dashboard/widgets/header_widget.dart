@@ -5,6 +5,7 @@ import '../../../shared/theme/theme_provider.dart';
 import 'notification_icon.dart';
 import '../../profile/widgets/avatar_menu.dart';
 import '../../settings/view/settings_dialog.dart';
+import '../../auth/viewmodel/auth_viewmodel.dart';
 
 class HeaderWidget extends StatefulWidget {
   const HeaderWidget({Key? key}) : super(key: key);
@@ -33,6 +34,27 @@ class _HeaderWidgetState extends State<HeaderWidget> {
   Widget build(BuildContext context) {
     final isLight = context.watch<ThemeProvider>().mode == ThemeMode.light;
     final vm = context.watch<MainViewModel>();
+    final auth = context.watch<AuthViewModel>();
+
+    void _requireLoginOrNavigate({
+      required String route,
+      required PageType page,
+    }) {
+      if (auth.isLoggedIn) {
+        vm.navigationTo(page);
+        final current = ModalRoute.of(context)?.settings.name;
+        if (current != route) {
+          Navigator.of(context).pushNamed(route);
+        }
+      } else {
+        // (선택) 스낵바 안내
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('로그인이 필요합니다.')));
+        Navigator.of(context).pushNamed('/login');
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
       decoration: BoxDecoration(
@@ -104,24 +126,16 @@ class _HeaderWidgetState extends State<HeaderWidget> {
           _NavItem(
             label: 'My Library',
             selected: vm.currentPage == PageType.library,
-            onTap: () {
-              vm.navigationTo(PageType.library);
-              final current = ModalRoute.of(context)?.settings.name;
-              if (current != '/library') {
-                Navigator.of(context).pushNamed('/library');
-              }
-            },
+            onTap: () => _requireLoginOrNavigate(
+              route: '/library',
+              page: PageType.library,
+            ),
           ),
           _NavItem(
             label: 'My Blog',
             selected: vm.currentPage == PageType.blog,
-            onTap: () {
-              vm.navigationTo(PageType.blog);
-              final current = ModalRoute.of(context)?.settings.name;
-              if (current != '/blogs') {
-                Navigator.of(context).pushNamed('/blogs');
-              }
-            },
+            onTap: () =>
+                _requireLoginOrNavigate(route: '/blogs', page: PageType.blog),
           ),
 
           const Spacer(),
