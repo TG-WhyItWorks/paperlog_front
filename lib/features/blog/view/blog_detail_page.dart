@@ -3,9 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../dashboard/widgets/header_widget.dart';
 import '../../dashboard/widgets/sidebar_widget.dart';
-import '../../dashboard/viewmodel/dashboard_viewmodel.dart'; // MainViewModel (사이드바/최근보기)
-import '../../../core/models/review_models.dart'; // BlogReviewSummary
+import '../../dashboard/viewmodel/dashboard_viewmodel.dart';
+import '../../../core/models/review_models.dart';
 import '../viewmodel/blog_detail_viewmodel.dart';
+import '../../auth/viewmodel/auth_viewmodel.dart';
 
 class BlogDetailPage extends StatefulWidget {
   final int reviewId;
@@ -56,6 +57,7 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
     }
 
     final r = vm.review!;
+    final meId = context.watch<AuthViewModel>().user?.id;
 
     // 리뷰가 준비되면 최근 본 포스트에 1번만 기록
     if (!_trackedRecent) {
@@ -99,31 +101,71 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
                   // 상단 액션(좋아요)
                   Row(
                     children: [
-                      Text(
-                        'Post',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: Text(
+                          r.title,
+                          style: Theme.of(context).textTheme.headlineSmall,
                         ),
                       ),
-                      const Spacer(),
                       IconButton(
                         tooltip: vm.liked ? '좋아요 취소' : '좋아요',
                         onPressed: () async {
-                          try {
-                            await context
-                                .read<BlogDetailViewModel>()
-                                .toggleLike();
-                          } catch (e) {
-                            if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('처리 실패: $e')),
-                            );
-                          }
+                          /* 기존 toggleLike */
                         },
                         icon: Icon(
                           vm.liked ? Icons.favorite : Icons.favorite_border,
                         ),
                       ),
+                      if (meId != null && r.user?.id == meId) // 내 글일 때만
+                        PopupMenuButton<String>(
+                          onSelected: (v) async {
+                            if (v == 'edit') {
+                              final updated = await Navigator.of(context)
+                                  .pushNamed(
+                                    '/blog/edit',
+                                    arguments: {
+                                      'reviewId': r.id,
+                                      'title': r.title,
+                                      'content': r.content,
+                                      'paperId': r.paperId,
+                                    },
+                                  );
+                              if (updated == true) await vm.reload();
+                            }
+                            if (v == 'delete') {
+                              final ok = await showDialog<bool>(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: const Text('삭제'),
+                                  content: const Text('정말 삭제할까요?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('취소'),
+                                    ),
+                                    FilledButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: const Text('삭제'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (ok == true) {
+                                await vm.deleteCurrent();
+                                if (!mounted) return;
+                                Navigator.of(
+                                  context,
+                                ).pop({'deleted': true, 'reviewId': r.id});
+                              }
+                            }
+                          },
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(value: 'edit', child: Text('수정')),
+                            PopupMenuItem(value: 'delete', child: Text('삭제')),
+                          ],
+                        ),
                     ],
                   ),
                   const SizedBox(height: 12),

@@ -22,4 +22,25 @@ class BlogFeedViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> deleteReview(int reviewId) async {
+    final backup = List.of(items);
+    items.removeWhere((e) => e.id == reviewId);
+    notifyListeners();
+
+    try {
+      await _svc.delete(reviewId);
+    } catch (e) {
+      items = backup;
+      error = '삭제 실패: $e';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  // (선택) 상세에서 pop 결과로 리스트에서만 지울 때 씀
+  void removeById(int reviewId) {
+    items.removeWhere((e) => e.id == reviewId);
+    notifyListeners();
+  }
 }

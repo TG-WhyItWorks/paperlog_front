@@ -77,6 +77,8 @@ class PaperLogApp extends StatelessWidget {
             BlogDetailPage.fromArgs(ModalRoute.of(ctx)?.settings.arguments),
         '/blog/new': (ctx) =>
             BlogWritePage.fromArgs(ModalRoute.of(ctx)?.settings.arguments),
+        '/blog/edit': (ctx) =>
+            BlogWritePage.fromArgs(ModalRoute.of(ctx)!.settings.arguments),
       },
 
       //존재하지 않는 라우트 요청 시 처리

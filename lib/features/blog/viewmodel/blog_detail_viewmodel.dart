@@ -58,4 +58,22 @@ class BlogDetailViewModel extends ChangeNotifier {
       // 실패 시 스낵바는 화면에서 처리
     }
   }
+
+  Future<void> deleteCurrent() async {
+    if (review == null) return;
+    final id = review!.id;
+    loading = true;
+    notifyListeners();
+    try {
+      await _svc.delete(id);
+    } finally {
+      loading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> reload() async {
+    if (review == null) return;
+    await load(review!.id);
+  }
 }

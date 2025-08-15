@@ -9,7 +9,6 @@ class PaperSearchService {
     int skip = 0,
     int limit = 30,
   }) async {
-    // ✅ Explore와 동일: /api/arxiv/ + query 파라미터
     final uri = ApiConfig.uri('/api/arxiv/', {
       'query': keyword,
       'skip': '$skip',

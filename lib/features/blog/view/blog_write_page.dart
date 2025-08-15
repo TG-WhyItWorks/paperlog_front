@@ -6,20 +6,40 @@ import '../../dashboard/widgets/header_widget.dart';
 import '../../dashboard/widgets/sidebar_widget.dart';
 import '../../dashboard/viewmodel/dashboard_viewmodel.dart';
 import '../viewmodel/blog_write_viewmodel.dart';
-import '../../paper/widgets/paper_picker_sheet.dart'; // ✅ 추가
+import '../../paper/widgets/paper_picker_sheet.dart';
 import '../../../core/models/paper_model.dart';
 
 class BlogWritePage extends StatefulWidget {
-  final int? initialPaperId; // 논문 상세에서 넘어올 때 참조용
-  const BlogWritePage({super.key, this.initialPaperId});
+  final int? reviewId;
+  final int? initialPaperId;
+  final String? initialTitle;
+  final String? initialContent;
+
+  const BlogWritePage({
+    super.key,
+    this.reviewId,
+    this.initialPaperId,
+    this.initialTitle,
+    this.initialContent,
+  });
 
   static Widget fromArgs(Object? args) {
-    int? pid;
-    if (args is int) pid = args;
-    if (args is Map && args['paperId'] is int) pid = args['paperId'];
+    int? reviewId, paperId;
+    String? title, content;
+    if (args is Map) {
+      reviewId = args['reviewId'] as int?;
+      paperId = args['paperId'] as int?;
+      title = args['title'] as String?;
+      content = args['content'] as String?;
+    }
     return ChangeNotifierProvider(
       create: (_) => BlogWriteViewModel(),
-      child: BlogWritePage(initialPaperId: pid),
+      child: BlogWritePage(
+        reviewId: reviewId,
+        initialPaperId: paperId,
+        initialTitle: title,
+        initialContent: content,
+      ),
     );
   }
 
@@ -80,6 +100,7 @@ class _BlogWritePageState extends State<BlogWritePage> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<BlogWriteViewModel>();
+    final isEdit = widget.reviewId != null;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -215,6 +236,7 @@ class _BlogWritePageState extends State<BlogWritePage> {
                                   await context
                                       .read<BlogWriteViewModel>()
                                       .submit(
+                                        reviewId: widget.reviewId,
                                         title: _title.text.trim(),
                                         content: _content.text.trim(),
                                         paperId: pid,
@@ -222,13 +244,15 @@ class _BlogWritePageState extends State<BlogWritePage> {
                                       );
                                   if (!mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('작성 완료')),
+                                    SnackBar(
+                                      content: Text(isEdit ? '수정 완료' : '작성 완료'),
+                                    ),
                                   );
                                   Navigator.of(context).pop(true);
                                 } catch (e) {
                                   if (!mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('작성 실패: $e')),
+                                    SnackBar(content: Text('실패: $e')),
                                   );
                                 }
                               },
@@ -240,7 +264,7 @@ class _BlogWritePageState extends State<BlogWritePage> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text('등록'),
+                            : Text(isEdit ? '수정' : '등록'),
                       ),
                     ),
                   ],
