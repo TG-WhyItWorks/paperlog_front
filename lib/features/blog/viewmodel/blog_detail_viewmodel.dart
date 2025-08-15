@@ -9,18 +9,21 @@ class BlogDetailViewModel extends ChangeNotifier {
   String? error;
   BlogReview? review;
   bool liked = false;
+  bool likeBusy = false;
 
   Future<void> load(int id) async {
     loading = true;
     error = null;
     notifyListeners();
     try {
-      review = await _svc.detail(id);
-      // 내가 좋아요 눌렀는지 확인(간단히 전체 목록에서 포함 여부로 판단)
+      final r = await _svc.detail(id);
+      review = r;
       try {
         final likedIds = await _svc.likedReviewIds();
         liked = likedIds.contains(id);
-      } catch (_) {}
+      } catch (_) {
+        liked = false;
+      }
     } catch (e) {
       error = e.toString();
     } finally {
@@ -30,32 +33,31 @@ class BlogDetailViewModel extends ChangeNotifier {
   }
 
   Future<void> toggleLike() async {
-    if (review == null) return;
-    final id = review!.id;
+    if (review == null || likeBusy) return;
+
+    likeBusy = true;
+
+    final prevLiked = liked;
+    final prevCount = review!.voteCount;
+    liked = !liked;
+    review = review!.copyWith(
+      voteCount: (prevCount + (liked ? 1 : -1)).clamp(0, 1 << 31),
+    );
+    notifyListeners();
+
     try {
-      int cnt;
-      if (!liked) {
-        cnt = await _svc.like(id);
-        liked = true;
-      } else {
-        cnt = await _svc.unlike(id);
-        liked = false;
-      }
-      review = BlogReview(
-        id: review!.id,
-        title: review!.title,
-        content: review!.content,
-        createDate: review!.createDate,
-        modifyDate: review!.modifyDate,
-        user: review!.user,
-        paperId: review!.paperId,
-        images: review!.images,
-        comments: review!.comments,
-        voteCount: cnt,
-      );
-      notifyListeners();
+      final newCount = liked
+          ? await _svc.like(review!.id)
+          : await _svc.unlike(review!.id);
+      review = review!.copyWith(voteCount: newCount);
     } catch (e) {
-      // 실패 시 스낵바는 화면에서 처리
+      // 롤백
+      liked = prevLiked;
+      review = review!.copyWith(voteCount: prevCount);
+      rethrow;
+    } finally {
+      likeBusy = false;
+      notifyListeners();
     }
   }
 

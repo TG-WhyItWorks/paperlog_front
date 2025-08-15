@@ -12,7 +12,7 @@ class BlogHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      // ✅ 페이지 전체에서 공유
+      // 페이지 전체에서 공유
       create: (_) => BlogFeedViewModel()..loadMine(),
       child: DefaultTabController(
         length: 2,
@@ -60,12 +60,12 @@ class BlogHomePage extends StatelessWidget {
             ],
           ),
           floatingActionButton: Builder(
-            // ✅ FAB도 같은 BlogFeedViewModel을 읽을 수 있게 Builder로 하위 context 확보
+            // FAB도 같은 BlogFeedViewModel을 읽을 수 있게 Builder로 하위 context 확보
             builder: (ctx) => FloatingActionButton.extended(
               onPressed: () async {
                 final created = await Navigator.of(ctx).pushNamed('/blog/new');
                 if (created == true) {
-                  await ctx.read<BlogFeedViewModel>().loadMine(); // ✅ 즉시 리로드
+                  await ctx.read<BlogFeedViewModel>().loadMine(); // 즉시 리로드
                 }
               },
               icon: const Icon(Icons.edit),
@@ -94,17 +94,10 @@ class _MyBlogTab extends StatelessWidget {
         final s = vm.items[i];
         return ReviewCard(
           summary: s,
-          canManage: true, // ✅ 내 글 탭이므로 관리 허용
+          canManage: true, // 내 글 탭이므로 관리 허용
           onTap: () async {
-            final result = await Navigator.of(
-              ctx,
-            ).pushNamed('/blog', arguments: s.id);
-            // 상세에서 삭제 후 돌아올 때 리스트 반영
-            if (result is Map && result['deleted'] == true) {
-              ctx.read<BlogFeedViewModel>().removeById(
-                result['reviewId'] as int,
-              );
-            }
+            await Navigator.of(ctx).pushNamed('/blog', arguments: s.id);
+            await ctx.read<BlogFeedViewModel>().loadMine();
           },
           onEdit: () async {
             final updated = await Navigator.of(ctx).pushNamed(

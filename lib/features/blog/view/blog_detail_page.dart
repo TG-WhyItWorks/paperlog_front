@@ -109,9 +109,28 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
                       ),
                       IconButton(
                         tooltip: vm.liked ? '좋아요 취소' : '좋아요',
-                        onPressed: () async {
-                          /* 기존 toggleLike */
-                        },
+                        onPressed: vm.likeBusy
+                            ? null
+                            : () async {
+                                // 로그인 확인(미로그인 → 로그인 페이지로)
+                                final me = context.read<AuthViewModel>().user;
+                                if (me == null) {
+                                  if (!mounted) return;
+                                  Navigator.of(context).pushNamed('/login');
+                                  return;
+                                }
+
+                                try {
+                                  await context
+                                      .read<BlogDetailViewModel>()
+                                      .toggleLike();
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('좋아요 처리 실패: $e')),
+                                  );
+                                }
+                              },
                         icon: Icon(
                           vm.liked ? Icons.favorite : Icons.favorite_border,
                         ),

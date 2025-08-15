@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class BlogUser {
   final int? id;
   final String username;
@@ -138,6 +136,21 @@ class BlogReview {
       voteCount: (json['vote_count'] is int)
           ? json['vote_count']
           : int.tryParse('${json['vote_count'] ?? 0}') ?? 0,
+    );
+  }
+
+  BlogReview copyWith({int? voteCount}) {
+    return BlogReview(
+      id: id,
+      title: title,
+      content: content,
+      createDate: createDate,
+      modifyDate: modifyDate,
+      user: user,
+      paperId: paperId,
+      images: images,
+      comments: comments,
+      voteCount: voteCount ?? this.voteCount,
     );
   }
 }
