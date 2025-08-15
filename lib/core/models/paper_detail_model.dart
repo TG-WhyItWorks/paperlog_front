@@ -1,6 +1,6 @@
 // lib/core/models/paper_detail_model.dart
 import 'package:intl/intl.dart';
-import 'blog_post_model.dart';
+import 'review_models.dart';
 
 class PaperDetail {
   final String id; // arxiv_id
@@ -12,7 +12,7 @@ class PaperDetail {
   final String translatedAbstract;
   final String blogSummary;
   final String pdfUrl; // link
-  final List<BlogPost> relatedBlogs;
+  final List<BlogReviewSummary> relatedBlogs;
 
   // 선택: 응답에 있을 수 있는 필드들
   final String? doi;
@@ -60,13 +60,13 @@ class PaperDetail {
     final year = DateFormat('yyyy').format(dt);
 
     // reviews → BlogPost[]
-    final reviews = (json['reviews'] is List)
+    final reviewsRaw = (json['reviews'] is List)
         ? (json['reviews'] as List)
         : const [];
-    final blogs = reviews.map((e) {
-      if (e is Map<String, dynamic>) return BlogPost.fromJson(e);
-      return BlogPost(title: 'Blog', excerpt: '', url: '', imageUrl: null);
-    }).toList();
+    final related = reviewsRaw
+        .whereType<Map>()
+        .map((e) => BlogReviewSummary.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
 
     return PaperDetail(
       id: _s(json['arxiv_id'] ?? json['id']),
@@ -78,7 +78,7 @@ class PaperDetail {
       abstractText: _s(json['summary'] ?? json['abstract']),
       translatedAbstract: _s(json['translated_abstract'], '번역된 초록이 여기에 표시됩니다.'),
       blogSummary: _s(json['blog_summary'], '블로그 요약이 여기에 표시됩니다.'),
-      relatedBlogs: blogs,
+      relatedBlogs: related,
       doi: json['doi'] == null ? null : json['doi'].toString(),
       likeCount: _i(json['like_count']),
       isLiked: json['is_liked'] is bool ? json['is_liked'] as bool : null,

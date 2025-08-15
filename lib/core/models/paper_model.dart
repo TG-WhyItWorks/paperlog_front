@@ -1,5 +1,5 @@
 import 'package:intl/intl.dart';
-import 'blog_post_model.dart';
+import 'review_models.dart';
 
 class Paper {
   final String id;
@@ -12,7 +12,7 @@ class Paper {
   final DateTime? publishedAt;
   final String translatedAbstract;
   final String blogSummary;
-  final List<BlogPost> relatedBlogs;
+  final List<BlogReviewSummary> relatedBlogs;
   final String? doi;
   final int likeCount;
   final bool? isLiked;
@@ -45,7 +45,7 @@ class Paper {
     DateTime? publishedAt,
     String? translatedAbstract,
     String? blogSummary,
-    List<BlogPost>? relatedBlogs,
+    List<BlogReviewSummary>? relatedBlogs,
     String? doi,
     int? likeCount,
     bool? isLiked,
@@ -61,7 +61,8 @@ class Paper {
       publishedAt: publishedAt ?? this.publishedAt,
       translatedAbstract: translatedAbstract ?? this.translatedAbstract,
       blogSummary: blogSummary ?? this.blogSummary,
-      relatedBlogs: relatedBlogs ?? List<BlogPost>.from(this.relatedBlogs),
+      relatedBlogs:
+          relatedBlogs ?? List<BlogReviewSummary>.from(this.relatedBlogs),
       doi: doi ?? this.doi,
       likeCount: likeCount ?? this.likeCount,
       isLiked: isLiked ?? this.isLiked,
@@ -107,17 +108,14 @@ class Paper {
         ? DateFormat('yyyy').format(publishedAt)
         : _s(json['year'], ''); // 백호환
 
-    // reviews → BlogPost 리스트(없으면 빈 리스트)
-    final reviews = (json['reviews'] is List)
+    // reviews → BlogReviewSummary[]
+    final reviewsRaw = (json['reviews'] is List)
         ? (json['reviews'] as List)
         : const [];
-    final blogs = reviews.map((e) {
-      if (e is Map<String, dynamic>) {
-        return BlogPost.fromJson(e);
-      } else {
-        return BlogPost(title: 'Blog', url: '', excerpt: '', imageUrl: null);
-      }
-    }).toList();
+    final related = reviewsRaw
+        .whereType<Map>()
+        .map((e) => BlogReviewSummary.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
 
     return Paper(
       id: _s(json['arxiv_id'] ?? json['id']),
@@ -131,7 +129,7 @@ class Paper {
       doi: (json['doi'] == null) ? null : json['doi'].toString(),
       likeCount: _i(json['like_count']),
       isLiked: (json['is_liked'] is bool) ? json['is_liked'] as bool : null,
-      relatedBlogs: blogs,
+      relatedBlogs: related,
     );
   }
 

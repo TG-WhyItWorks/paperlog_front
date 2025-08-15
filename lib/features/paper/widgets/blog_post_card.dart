@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../../core/models/blog_post_model.dart';
+import '../../../core/models/review_models.dart';
 
 class BlogPostCard extends StatelessWidget {
-  final BlogPost blog;
+  final BlogReviewSummary blog;
   const BlogPostCard({Key? key, required this.blog}) : super(key: key);
 
   @override
@@ -11,9 +10,8 @@ class BlogPostCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: InkWell(
-        onTap: () {
-          if (blog.url.isNotEmpty) launchUrl(Uri.parse(blog.url));
-        },
+        onTap: () =>
+            Navigator.of(context).pushNamed('/blog', arguments: blog.id),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -23,7 +21,7 @@ class BlogPostCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Blog Post',
+                      'Review',
                       style: Theme.of(context).textTheme.labelSmall,
                     ),
                     const SizedBox(height: 4),
@@ -35,16 +33,16 @@ class BlogPostCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      blog.excerpt,
+                      blog.content,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
                     TextButton(
-                      onPressed: () {
-                        if (blog.url.isNotEmpty) launchUrl(Uri.parse(blog.url));
-                      },
-                      child: Text('Visit'),
+                      onPressed: () => Navigator.of(
+                        context,
+                      ).pushNamed('/blog', arguments: blog.id),
+                      child: const Text('Open'),
                     ),
                   ],
                 ),
@@ -53,16 +51,12 @@ class BlogPostCard extends StatelessWidget {
               Container(
                 width: 120,
                 height: 80,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: Theme.of(context).colorScheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(6),
-                  image: blog.imageUrl != null
-                      ? DecorationImage(
-                          image: NetworkImage(blog.imageUrl!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
                 ),
+                child: const Icon(Icons.rate_review_outlined),
               ),
             ],
           ),
