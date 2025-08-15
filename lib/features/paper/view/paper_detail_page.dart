@@ -10,6 +10,7 @@ import '../viewmodel/paper_detail_viewmodel.dart';
 import '../widgets/blog_post_card.dart';
 import '../widgets/recommended_papers_list.dart';
 import '../../../core/models/paper_model.dart';
+import 'package:paperlog_front/features/paper/widgets/paper_review_list.dart';
 
 class PaperDetailPage extends StatefulWidget {
   final String paperId;
@@ -128,6 +129,37 @@ class _PaperDetailedPageState extends State<PaperDetailPage>
           ),
 
           const SizedBox(height: 32),
+          // 🔽 추가: 이 논문 리뷰(좋아요 많은 순)
+          Text(
+            'Review Blogs (Top Likes)',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          PaperReviewList(paperTitle: detail.title, limit: 10),
+          const SizedBox(height: 8),
+
+          // 🔽 추가: 더보기(검색 탭으로 이동)
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () {
+                Navigator.of(context).pushNamed(
+                  '/blogs',
+                  arguments: {
+                    'tab': 'search', // 검색 탭으로 열기
+                    'keyword': detail.title, // 논문 제목으로 검색
+                    'orderByVotes': true, // 좋아요순
+                  },
+                );
+              },
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('더보기'),
+            ),
+          ),
+
+          const SizedBox(height: 24),
 
           //블로그 추천
           Text(

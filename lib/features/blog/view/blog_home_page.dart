@@ -11,11 +11,23 @@ class BlogHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    String initialKeyword = '';
+    bool initialOrderByVotes = false;
+    int initialTabIndex = 0; // 0: 내 포스트, 1: 검색
+
+    if (args is Map) {
+      final tab = (args['tab'] ?? '').toString();
+      if (tab == 'search') initialTabIndex = 1;
+      initialKeyword = (args['keyword'] ?? '').toString();
+      initialOrderByVotes = args['orderByVotes'] == true;
+    }
     return ChangeNotifierProvider(
       // 페이지 전체에서 공유
       create: (_) => BlogFeedViewModel()..loadMine(),
       child: DefaultTabController(
         length: 2,
+        initialIndex: initialTabIndex,
         child: Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: const PreferredSize(
@@ -46,9 +58,21 @@ class BlogHomePage extends StatelessWidget {
                           children: [
                             const _MyBlogTab(),
 
+                            // 🔽 검색 탭: 인자로 초기 검색 수행
                             ChangeNotifierProvider(
-                              create: (_) => BlogSearchViewModel(),
-                              child: const _SearchTab(),
+                              create: (_) {
+                                final vm = BlogSearchViewModel();
+                                if (initialKeyword.isNotEmpty) {
+                                  vm.setKeyword(initialKeyword);
+                                  vm.setOrderByVotes(initialOrderByVotes);
+                                  vm.search(); // 자동 검색
+                                }
+                                return vm;
+                              },
+                              child: _SearchTab(
+                                initialKeyword: initialKeyword,
+                                initialOrderByVotes: initialOrderByVotes,
+                              ),
                             ),
                           ],
                         ),
@@ -149,15 +173,34 @@ class _MyBlogTab extends StatelessWidget {
   }
 }
 
+// 🔽 초기 키워드/정렬을 입력창에도 반영
 class _SearchTab extends StatefulWidget {
-  const _SearchTab();
+  final String initialKeyword;
+  final bool initialOrderByVotes;
+  const _SearchTab({
+    this.initialKeyword = '',
+    this.initialOrderByVotes = false,
+    super.key,
+  });
 
   @override
   State<_SearchTab> createState() => _SearchTabState();
 }
 
 class _SearchTabState extends State<_SearchTab> {
-  final _ctrl = TextEditingController();
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.initialKeyword);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
