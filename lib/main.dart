@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:paperlog_front/features/auth/view/login_page.dart';
+import 'package:paperlog_front/features/blog/view/blog_detail_page.dart';
 import 'package:paperlog_front/features/explore/view/explore_page.dart';
 import 'package:paperlog_front/features/explore/viewmodel/explore_viewmodel.dart';
 import 'package:paperlog_front/features/paper/view/paper_detail_page.dart';
@@ -15,6 +16,8 @@ import 'features/dashboard/viewmodel/dashboard_viewmodel.dart';
 import 'features/profile/view/profile_page.dart';
 import 'features/library/view/library_page.dart';
 import 'features/library/viewmodel/library_viewmodel.dart';
+import 'features/blog/view/blog_home_page.dart';
+import 'features/blog/view/blog_write_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,6 +72,11 @@ class PaperLogApp extends StatelessWidget {
           );
         },
         '/library': (context) => const LibraryPage(),
+        '/blogs': (_) => const BlogHomePage(),
+        '/blog': (ctx) =>
+            BlogDetailPage.fromArgs(ModalRoute.of(ctx)?.settings.arguments),
+        '/blog/new': (ctx) =>
+            BlogWritePage.fromArgs(ModalRoute.of(ctx)?.settings.arguments),
       },
 
       //존재하지 않는 라우트 요청 시 처리

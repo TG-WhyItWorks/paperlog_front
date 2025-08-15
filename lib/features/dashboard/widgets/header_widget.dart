@@ -118,8 +118,8 @@ class _HeaderWidgetState extends State<HeaderWidget> {
             onTap: () {
               vm.navigationTo(PageType.blog);
               final current = ModalRoute.of(context)?.settings.name;
-              if (current != '/blog') {
-                Navigator.of(context).pushNamed('/blog');
+              if (current != '/blogs') {
+                Navigator.of(context).pushNamed('/blogs');
               }
             },
           ),
