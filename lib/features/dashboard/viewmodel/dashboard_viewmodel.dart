@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../core/models/paper_model.dart';
+import '../../../core/models/review_models.dart';
 
 enum PageType { home, explore, library, blog }
 
@@ -7,7 +8,7 @@ class MainViewModel extends ChangeNotifier {
   List<Paper> recommendPapers = [];
 
   List<Paper> recentPapers = <Paper>[];
-  List<BlogPostSummary> recentBlogs = <BlogPostSummary>[];
+  List<BlogReviewSummary> recentBlogs = <BlogReviewSummary>[];
 
   //사용자가 본 논문을 최근 목록에 쌓기(중복 제거 + 최대 20개)
   void viewedPaper(Paper p) {
@@ -16,8 +17,8 @@ class MainViewModel extends ChangeNotifier {
   }
 
   //사용자가 본 블로그를 최근 목록에 쌓기(중복 제거 + 최대 20개)
-  void viewedBlog(BlogPostSummary b) {
-    _pushUnique<BlogPostSummary>(recentBlogs, b, (x) => x.url);
+  void viewedBlog(BlogReviewSummary b) {
+    _pushUnique<BlogReviewSummary>(recentBlogs, b, (x) => '${x.id}');
     notifyListeners();
   }
 
@@ -73,12 +74,4 @@ class MainViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
-}
-
-// 간단한 블로그 요약 VO (필요하면 본인 모델로 교체)
-class BlogPostSummary {
-  final String title;
-  final String url;
-  final String? source; // 도메인/블로그명 등
-  BlogPostSummary({required this.title, required this.url, this.source});
 }

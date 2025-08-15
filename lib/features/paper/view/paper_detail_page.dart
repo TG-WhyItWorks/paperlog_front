@@ -9,6 +9,7 @@ import '../../dashboard/viewmodel/dashboard_viewmodel.dart';
 import '../viewmodel/paper_detail_viewmodel.dart';
 import '../widgets/blog_post_card.dart';
 import '../widgets/recommended_papers_list.dart';
+import '../../../core/models/paper_model.dart';
 
 class PaperDetailPage extends StatefulWidget {
   final String paperId;
@@ -21,6 +22,7 @@ class PaperDetailPage extends StatefulWidget {
 class _PaperDetailedPageState extends State<PaperDetailPage>
     with TickerProviderStateMixin {
   late TabController _tabController;
+  bool _trackedRecent = false;
 
   @override
   void initState() {
@@ -75,6 +77,29 @@ class _PaperDetailedPageState extends State<PaperDetailPage>
 
   Widget _buildContent(BuildContext context, PaperDetailViewModel vm) {
     final detail = vm.detail!;
+
+    // ✅ 최근 본 논문 기록(한 번만)
+    if (!_trackedRecent) {
+      final p = Paper(
+        id: detail.id,
+        title: detail.title,
+        authors: detail.authors,
+        year: detail.year,
+        fields: detail.fields,
+        pdfUrl: detail.pdfUrl,
+        abstractText: detail.abstractText,
+        translatedAbstract: detail.translatedAbstract,
+        blogSummary: detail.blogSummary,
+        relatedBlogs: detail.relatedBlogs, // (List<BlogReviewSummary>) OK
+        doi: detail.doi,
+        likeCount: detail.likeCount,
+        isLiked: detail.isLiked,
+        publishedAt: null, // 필요시 서버 값으로 세팅
+      );
+      context.read<MainViewModel>().viewedPaper(p);
+      _trackedRecent = true;
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
       child: Column(

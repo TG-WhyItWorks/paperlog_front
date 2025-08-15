@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../dashboard/viewmodel/dashboard_viewmodel.dart'; // ✅ 최근 보기 기록
+import '../../../core/models/review_models.dart'; // ✅ BlogReviewSummary 타입
 import '../viewmodel/blog_detail_viewmodel.dart';
 
-class BlogDetailPage extends StatelessWidget {
+class BlogDetailPage extends StatefulWidget {
   final int reviewId;
   const BlogDetailPage({super.key, required this.reviewId});
 
+  // routes['/blog'] 에서 사용:
+  // return BlogDetailPage.fromArgs(ModalRoute.of(ctx)?.settings.arguments);
   static Widget fromArgs(Object? args) {
     int? id;
     if (args is int) id = args;
@@ -17,14 +21,42 @@ class BlogDetailPage extends StatelessWidget {
   }
 
   @override
+  State<BlogDetailPage> createState() => _BlogDetailPageState();
+}
+
+class _BlogDetailPageState extends State<BlogDetailPage> {
+  bool _trackedRecent = false; // ✅ 최근 보기 기록 플래그
+
+  @override
   Widget build(BuildContext context) {
     final vm = context.watch<BlogDetailViewModel>();
-    if (vm.loading)
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
-    if (vm.error != null)
+
+    if (vm.loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (vm.error != null) {
       return Scaffold(body: Center(child: Text('오류: ${vm.error}')));
+    }
 
     final r = vm.review!;
+
+    // ✅ 리뷰가 준비되면 최근 본 포스트에 1번만 기록
+    if (!_trackedRecent) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final summary = BlogReviewSummary(
+          id: r.id,
+          title: r.title,
+          content: r.content,
+          modifyDate: r.modifyDate,
+          user: r.user,
+          voteCount: r.voteCount,
+        );
+        context.read<MainViewModel>().viewedBlog(summary);
+        setState(() => _trackedRecent = true);
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Post'),
@@ -35,11 +67,10 @@ class BlogDetailPage extends StatelessWidget {
               try {
                 await context.read<BlogDetailViewModel>().toggleLike();
               } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('처리 실패: $e')));
-                }
+                if (!mounted) return;
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('처리 실패: $e')));
               }
             },
             icon: Icon(vm.liked ? Icons.favorite : Icons.favorite_border),
@@ -69,6 +100,8 @@ class BlogDetailPage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
+
+            // 인용 논문으로 이동
             if (r.paperId != null)
               Align(
                 alignment: Alignment.centerLeft,
@@ -80,9 +113,12 @@ class BlogDetailPage extends StatelessWidget {
                   label: const Text('인용 논문으로 이동'),
                 ),
               ),
+
             const SizedBox(height: 12),
             Text(r.content),
             const SizedBox(height: 16),
+
+            // 이미지들
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -100,9 +136,12 @@ class BlogDetailPage extends StatelessWidget {
                   )
                   .toList(),
             ),
+
             const SizedBox(height: 24),
             Text('Comments', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
+
+            // 댓글들
             ...r.comments.map(
               (c) => ListTile(
                 leading: const Icon(Icons.comment),
@@ -111,7 +150,7 @@ class BlogDetailPage extends StatelessWidget {
                 trailing: c.createDate != null ? Text('${c.createDate}') : null,
               ),
             ),
-            // TODO: 댓글 작성 API 제공 시 입력창/등록 버튼 추가
+            // TODO: 댓글 작성 입력창/등록 버튼 (API 준비되면 연결)
           ],
         ),
       ),

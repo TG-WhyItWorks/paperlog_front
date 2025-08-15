@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paperlog_front/core/models/review_models.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/dashboard_viewmodel.dart';
 import '../../../core/models/library_models.dart';
@@ -330,7 +331,7 @@ class _SideBarWidgetState extends State<SidebarWidget> {
     );
   }
 
-  Widget _recentBlogTile(BuildContext context, BlogPostSummary b) {
+  Widget _recentBlogTile(BuildContext context, BlogReviewSummary b) {
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
@@ -343,15 +344,15 @@ class _SideBarWidgetState extends State<SidebarWidget> {
           context,
         ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
       ),
-      subtitle: (b.source?.isNotEmpty ?? false)
+      subtitle: (b.user?.username.isNotEmpty ?? false)
           ? Text(
-              b.source!,
+              b.user!.username,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall,
             )
           : null,
-      onTap: () => Navigator.of(context).pushNamed('/blog', arguments: b.url),
+      onTap: () => Navigator.of(context).pushNamed('/blog', arguments: b.id),
     );
   }
 }
