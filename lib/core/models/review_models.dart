@@ -114,7 +114,9 @@ class BlogReview {
         .map((e) => ReviewImageRead.fromJson(Map<String, dynamic>.from(e)))
         .toList();
 
-    final cmts = (json['comment'] as List? ?? const [])
+    final dynamic rawComments = json['comments'] ?? json['comment'] ?? const [];
+
+    final cmts = (rawComments is List ? rawComments : const <dynamic>[])
         .whereType<Map>()
         .map((e) => BlogComment.fromJson(Map<String, dynamic>.from(e)))
         .toList();
@@ -139,17 +141,27 @@ class BlogReview {
     );
   }
 
-  BlogReview copyWith({int? voteCount}) {
+  BlogReview copyWith({
+    String? title,
+    String? content,
+    DateTime? createDate,
+    DateTime? modifyDate,
+    BlogUser? user,
+    int? paperId,
+    List<ReviewImageRead>? images,
+    List<BlogComment>? comments,
+    int? voteCount,
+  }) {
     return BlogReview(
       id: id,
-      title: title,
-      content: content,
-      createDate: createDate,
-      modifyDate: modifyDate,
-      user: user,
-      paperId: paperId,
-      images: images,
-      comments: comments,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      createDate: createDate ?? this.createDate,
+      modifyDate: modifyDate ?? this.modifyDate,
+      user: user ?? this.user,
+      paperId: paperId ?? this.paperId,
+      images: images ?? this.images,
+      comments: comments ?? this.comments,
       voteCount: voteCount ?? this.voteCount,
     );
   }

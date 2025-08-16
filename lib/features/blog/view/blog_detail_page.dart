@@ -30,6 +30,13 @@ class BlogDetailPage extends StatefulWidget {
 
 class _BlogDetailPageState extends State<BlogDetailPage> {
   bool _trackedRecent = false; // 최근 보기 기록 플래그
+  final _commentCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _commentCtrl.dispose(); // ⭐ 추가
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -267,6 +274,83 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
                           ? Text('${c.createDate}')
                           : null,
                     ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 입력창
+                      Expanded(
+                        child: TextField(
+                          controller: _commentCtrl,
+                          minLines: 1,
+                          maxLines: 4,
+                          decoration: const InputDecoration(
+                            hintText: '댓글을 입력하세요',
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // 등록 버튼
+                      FilledButton.icon(
+                        onPressed:
+                            context.watch<BlogDetailViewModel>().commentBusy
+                            ? null
+                            : () async {
+                                // 로그인 확인
+                                final me = context.read<AuthViewModel>().user;
+                                if (me == null) {
+                                  if (!mounted) return;
+                                  Navigator.of(context).pushNamed('/login');
+                                  return;
+                                }
+
+                                final text = _commentCtrl.text.trim();
+                                if (text.isEmpty) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('댓글을 입력해 주세요.'),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                try {
+                                  await context
+                                      .read<BlogDetailViewModel>()
+                                      .submitComment(text);
+                                  if (!mounted) return;
+                                  _commentCtrl.clear();
+                                  // 선택: 등록 완료 토스트
+                                  // ScaffoldMessenger.of(context).showSnackBar(
+                                  //   const SnackBar(content: Text('등록 완료')),
+                                  // );
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('등록 실패: $e')),
+                                  );
+                                }
+                              },
+                        icon: context.watch<BlogDetailViewModel>().commentBusy
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.send),
+                        label: const Text('등록'),
+                      ),
+                    ],
                   ),
                   // TODO: 댓글 작성 입력창/등록 버튼 (API 준비되면 연결)
                 ],

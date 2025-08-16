@@ -296,4 +296,39 @@ class BlogService {
     final list = json.decode(res.body) as List;
     return list.map((e) => (e as Map<String, dynamic>)['id'] as int).toList();
   }
+
+  // 댓글 등록
+  Future<void> createComment({
+    required int reviewId,
+    required String content,
+  }) async {
+    final uri = ApiConfig.uri('/api/comment/create/$reviewId');
+    final res = await http
+        .post(
+          uri,
+          headers: await _authHeaders(),
+          body: json.encode({'content': content}),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (res.statusCode != 200 && res.statusCode != 204) {
+      throw Exception('댓글 등록 실패: HTTP ${res.statusCode} ${res.body}');
+    }
+  }
+
+  // 특정 리뷰의 댓글 목록
+  Future<List<BlogComment>> listComments(int reviewId) async {
+    final uri = ApiConfig.uri('/api/comment/review/$reviewId/comments');
+    final res = await http
+        .get(uri, headers: await _authHeaders())
+        .timeout(const Duration(seconds: 15));
+
+    if (res.statusCode != 200) {
+      throw Exception('댓글 목록 조회 실패: HTTP ${res.statusCode} ${res.body}');
+    }
+    final list = json.decode(res.body) as List;
+    return list
+        .map((e) => BlogComment.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
 }
