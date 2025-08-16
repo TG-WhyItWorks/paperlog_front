@@ -4,9 +4,9 @@ import 'package:provider/provider.dart';
 import '../../dashboard/widgets/header_widget.dart';
 import '../../dashboard/widgets/sidebar_widget.dart';
 import '../../dashboard/viewmodel/dashboard_viewmodel.dart';
-import '../../auth/viewmodel/auth_viewmodel.dart';
-import '../../../core/models/review_models.dart';
 import '../service/blog_service.dart';
+import '../../paper/widgets/paper_picker_sheet.dart';
+import '../../../core/models/paper_model.dart';
 
 class BlogEditPage extends StatefulWidget {
   final int reviewId;
@@ -60,6 +60,7 @@ class _BlogEditPageState extends State<BlogEditPage> {
   final _title = TextEditingController();
   final _content = TextEditingController();
   final _paperId = TextEditingController();
+  Paper? _selectedPaper;
 
   bool _loading = false; // 페이지 로딩(상세 불러오기)용
   bool _saving = false; // 저장 버튼 중복방지
@@ -94,6 +95,25 @@ class _BlogEditPageState extends State<BlogEditPage> {
       // 무시(초기값으로라도 수정 가능)
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _pickPaper() async {
+    final picked = await showModalBottomSheet<Paper>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => const FractionallySizedBox(
+        heightFactor: 0.85,
+        child: PaperPickerSheet(),
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedPaper = picked;
+        // 서버가 paper_id 정수면 아래 변환 필요: int.tryParse(picked.id)
+        _paperId.text = picked.id;
+      });
     }
   }
 
@@ -183,13 +203,58 @@ class _BlogEditPageState extends State<BlogEditPage> {
                         ),
                         const SizedBox(height: 8),
 
-                        TextField(
-                          controller: _paperId,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: '인용 논문 ID (선택)',
+                        GestureDetector(
+                          onTap: _pickPaper,
+                          child: AbsorbPointer(
+                            child: TextField(
+                              controller: _paperId,
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                labelText: '인용 논문 (검색으로 선택)',
+                                border: const OutlineInputBorder(),
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (_paperId.text.isNotEmpty)
+                                      IconButton(
+                                        tooltip: '지우기',
+                                        onPressed: () => setState(() {
+                                          _paperId.clear();
+                                          _selectedPaper = null;
+                                        }),
+                                        icon: const Icon(Icons.clear),
+                                      ),
+                                    IconButton(
+                                      tooltip: '검색',
+                                      onPressed: _pickPaper,
+                                      icon: const Icon(Icons.search),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         ),
+                        if (_selectedPaper != null) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.description_outlined, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '${_selectedPaper!.title}\n'
+                                  '${_selectedPaper!.authors.join(', ')} • '
+                                  '${_selectedPaper!.year} • ${_selectedPaper!.id}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: 16),
 
                         SizedBox(
