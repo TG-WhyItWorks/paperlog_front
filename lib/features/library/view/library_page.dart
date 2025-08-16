@@ -11,8 +11,6 @@ import '../../auth/viewmodel/auth_viewmodel.dart';
 import '../widgets/library_search_field.dart';
 import '../widgets/library_selection_toolbar.dart';
 import '../widgets/library_section_tile.dart';
-import '../widgets/library_paper_row.dart';
-import '../widgets/library_collection_tile.dart';
 import '../widgets/library_folder_actions.dart';
 import '../widgets/folder_tree.dart';
 
@@ -136,7 +134,7 @@ class _LibraryContent extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
-                  'Quick Lists',
+                  'States',
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
@@ -182,25 +180,7 @@ class _LibraryContent extends StatelessWidget {
                     ),
                 ],
               ),
-              LibraryCollectionTile(
-                title: 'My publications',
-                count: vm.section(LibrarySection.myPublications).length,
-                initiallyExpanded: _isInit(LibrarySection.myPublications),
-                children: vm
-                    .section(LibrarySection.myPublications)
-                    .map<Widget>((e) => LibraryPaperRow(item: e))
-                    .toList(),
-              ),
-              if (auth.isLoggedIn)
-                LibraryCollectionTile(
-                  title: 'Private Papers',
-                  count: vm.section(LibrarySection.private).length,
-                  initiallyExpanded: _isInit(LibrarySection.private),
-                  children: vm
-                      .section(LibrarySection.private)
-                      .map<Widget>((e) => LibraryPaperRow(item: e))
-                      .toList(),
-                ),
+
               // 사용자 폴더도 Expandable
               FolderTree(
                 vm: vm,

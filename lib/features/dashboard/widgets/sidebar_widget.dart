@@ -5,7 +5,6 @@ import '../viewmodel/dashboard_viewmodel.dart';
 import '../../../core/models/library_models.dart';
 import '../../library/viewmodel/library_viewmodel.dart';
 import '../../auth/viewmodel/auth_viewmodel.dart';
-import 'dart:math' as math;
 import '../../../core/models/paper_model.dart';
 import '../../../core/models/folder_model.dart';
 
@@ -18,6 +17,16 @@ class SidebarWidget extends StatefulWidget {
 }
 
 class _SideBarWidgetState extends State<SidebarWidget> {
+  final Set<String> _expandedIds = <String>{};
+  bool _isExpanded(String? id) => id != null && _expandedIds.contains(id);
+
+  void _toggleExpanded(String? id) {
+    if (id == null) return;
+    setState(() {
+      if (!_expandedIds.add(id)) _expandedIds.remove(id);
+    });
+  }
+
   //새 폴더 생성 다이얼로그
   Future<void> _addFolder(BuildContext context) async {
     final libVm = context.read<LibraryViewModel>();
@@ -76,176 +85,114 @@ class _SideBarWidgetState extends State<SidebarWidget> {
       );
     }
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 280),
-      curve: Curves.easeInOutCubic,
-      width: isOpen ? SidebarWidget._kSidebarWidth : 0,
+    if (!isOpen) {
+      return const SizedBox(width: 0, height: double.infinity);
+    }
+
+    return Container(
+      width: SidebarWidget._kSidebarWidth,
       color: Theme.of(context).colorScheme.surface,
-      child: ClipRect(
-        child: OverflowBox(
-          maxWidth: SidebarWidget._kSidebarWidth,
-          alignment: Alignment.centerLeft,
-          child: SizedBox(
-            width: SidebarWidget._kSidebarWidth,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ===== Quick Lists =====
+              Text(
+                'My Library',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              libItem('Want to read', LibrarySection.wantToRead),
+              libItem('Reading', LibrarySection.reading),
+              libItem('Completed', LibrarySection.completed),
 
-              child: AnimatedOpacity(
-                opacity: isOpen ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 280),
-                curve: Curves.easeInOutCubic,
-                child: IgnorePointer(
-                  ignoring: !isOpen,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ===== Quick Lists =====
-                        Text(
-                          'My Library',
-                          style: Theme.of(context).textTheme.titleLarge!
-                              .copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        libItem('Want to read', LibrarySection.wantToRead),
-                        libItem('Reading', LibrarySection.reading),
-                        libItem('Completed', LibrarySection.completed),
+              const Divider(height: 24),
 
-                        const Divider(height: 24),
-
-                        // ===== Collections (My publications / Private / Folders) =====
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'My Collections',
-                              style: Theme.of(context).textTheme.titleLarge!
-                                  .copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            if (auth.isLoggedIn)
-                              IconButton(
-                                tooltip: 'New folder',
-                                icon: Icon(
-                                  Icons.add,
-                                  color: Theme.of(context).iconTheme.color,
-                                ),
-                                onPressed: () => _addFolder(context),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        _collectionRow(
-                          context,
-                          title: 'My publications',
-                          count: lib
-                              .section(LibrarySection.myPublications)
-                              .length,
-                          icon: Icons.school_outlined,
-                          onTap: () => Navigator.of(context).pushNamed(
-                            '/library',
-                            arguments: LibrarySection.myPublications,
-                          ),
-                        ),
-                        if (auth.isLoggedIn)
-                          _collectionRow(
-                            context,
-                            title: 'Private Papers',
-                            count: lib.section(LibrarySection.private).length,
-                            icon: Icons.lock_outline,
-                            onTap: () => Navigator.of(context).pushNamed(
-                              '/library',
-                              arguments: LibrarySection.private,
-                            ),
-                          ),
-
-                        // 사용자 폴더
-                        if (auth.isLoggedIn)
-                          ..._buildFolderTreeSidebar(context, lib),
-
-                        // Recent View
-                        const Divider(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Recent View',
-                              style: Theme.of(context).textTheme.titleLarge!
-                                  .copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pushNamed(
-                                  '/library',
-                                  arguments: {'initialTab': 1},
-                                );
-                              },
-                              child: const Text('View all'),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        if ((main.recentPapers.isNotEmpty)) ...[
-                          Text(
-                            '최근 본 논문',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(height: 8),
-                          ...main.recentPapers
-                              .take(3)
-                              .map((p) => _recentPaperTile(context, p))
-                              .toList(),
-                          const SizedBox(height: 12),
-                        ],
-                        if ((main.recentBlogs.isNotEmpty)) ...[
-                          Text(
-                            '최근 본 블로그 포스트',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(height: 8),
-                          ...main.recentBlogs
-                              .take(3)
-                              .map((b) => _recentBlogTile(context, b))
-                              .toList(),
-                          const SizedBox(height: 12),
-                        ],
-                      ],
+              // ===== Collections (My publications / Private / Folders) =====
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Custom Folders',
+                    style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
+                  if (auth.isLoggedIn)
+                    IconButton(
+                      tooltip: 'New folder',
+                      icon: Icon(
+                        Icons.add,
+                        color: Theme.of(context).iconTheme.color,
+                      ),
+                      onPressed: () => _addFolder(context),
+                    ),
+                ],
               ),
-            ),
+
+              // 사용자 폴더
+              if (auth.isLoggedIn) ..._buildFolderTreeSidebar(context, lib),
+
+              // Recent View
+              const Divider(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Recent View',
+                    style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(
+                        context,
+                      ).pushNamed('/library', arguments: {'initialTab': 1});
+                    },
+                    child: const Text('View all'),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
+              if ((main.recentPapers.isNotEmpty)) ...[
+                Text(
+                  '최근 본 논문',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...main.recentPapers
+                    .take(3)
+                    .map((p) => _recentPaperTile(context, p))
+                    .toList(),
+                const SizedBox(height: 12),
+              ],
+              if ((main.recentBlogs.isNotEmpty)) ...[
+                Text(
+                  '최근 본 블로그 포스트',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...main.recentBlogs
+                    .take(3)
+                    .map((b) => _recentBlogTile(context, b))
+                    .toList(),
+                const SizedBox(height: 12),
+              ],
+            ],
           ),
         ),
       ),
-    );
-  }
-
-  // My Collections 공통 표시용
-  Widget _collectionRow(
-    BuildContext context, {
-    required String title,
-    required int count,
-    required VoidCallback onTap,
-    IconData icon = Icons.folder_outlined,
-  }) {
-    return ListTile(
-      dense: true,
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, size: 18, color: Theme.of(context).iconTheme.color),
-      title: Text(title, style: Theme.of(context).textTheme.bodyLarge),
-      subtitle: Text(
-        '$count papers',
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      trailing: Icon(
-        Icons.chevron_right,
-        color: Theme.of(context).iconTheme.color,
-      ),
-      onTap: onTap,
     );
   }
 
@@ -253,58 +200,41 @@ class _SideBarWidgetState extends State<SidebarWidget> {
     BuildContext context,
     LibraryViewModel vm,
   ) {
-    final all = vm.folders;
+    final all = vm.folders; // List<LibraryFolder>(id, name, count, parentId)
 
-    // parentId -> children
+    // parentId -> children 매핑
     final Map<String?, List<LibraryFolder>> byParent = {};
     for (final f in all) {
       byParent.putIfAbsent(f.parentId, () => <LibraryFolder>[]).add(f);
     }
 
-    List<Widget> buildBranch(String? parentId) {
+    List<Widget> buildBranch(String? parentId, int depth) {
       final children = byParent[parentId] ?? const <LibraryFolder>[];
-      return children.map((f) {
-        final grand = buildBranch(f.id);
-        final title = Row(
-          children: [
-            Expanded(
-              child: Text(f.name, style: Theme.of(context).textTheme.bodyLarge),
-            ),
-            Text('${f.count}', style: Theme.of(context).textTheme.bodyMedium),
-          ],
+      return children.expand((f) {
+        final hasChildren = (byParent[f.id]?.isNotEmpty ?? false);
+        final expanded = _isExpanded(f.id);
+
+        final row = _folderRow(
+          context: context,
+          folder: f,
+          depth: depth,
+          hasChildren: hasChildren,
+          expanded: expanded,
+          onTap: () => Navigator.of(
+            context,
+          ).pushNamed('/library', arguments: {'folderId': f.id}),
+          onToggle: hasChildren ? () => _toggleExpanded(f.id) : null,
         );
 
-        if (grand.isEmpty) {
-          // leaf → ListTile
-          return ListTile(
-            dense: true,
-            contentPadding: const EdgeInsets.only(left: 12),
-            leading: Icon(
-              Icons.folder_outlined,
-              size: 18,
-              color: Theme.of(context).iconTheme.color,
-            ),
-            title: title,
-            onTap: () => Navigator.of(context).pushNamed('/library'),
-          );
+        if (!hasChildren || !expanded) {
+          return [row];
         }
-
-        // has children → Smooth animated expasion
-        return _SmoothExpansion(
-          leading: Icon(
-            Icons.folder_outlined,
-            size: 18,
-            color: Theme.of(context).iconTheme.color,
-          ),
-          title: title,
-          childPadding: const EdgeInsets.only(left: 16),
-          children: grand,
-        );
+        return [row, ...buildBranch(f.id, depth + 1)];
       }).toList();
     }
 
-    // 루트(parentId == null)부터 그리기
-    return buildBranch(null);
+    // 루트부터
+    return buildBranch(null, 0);
   }
 
   Widget _recentPaperTile(BuildContext context, Paper p) {
@@ -331,6 +261,61 @@ class _SideBarWidgetState extends State<SidebarWidget> {
     );
   }
 
+  Widget _folderRow({
+    required BuildContext context,
+    required LibraryFolder folder,
+    required int depth,
+    required bool hasChildren,
+    required bool expanded,
+    required VoidCallback onTap,
+    VoidCallback? onToggle,
+  }) {
+    // 들여쓰기: depth * 14 + base
+    final left = 8.0 + depth * 14.0;
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.only(left: left, right: 6, top: 6, bottom: 6),
+        child: Row(
+          children: [
+            const Icon(Icons.folder_outlined, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                folder.name,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+            Text(
+              '${folder.count}',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(width: 6),
+
+            // 토글 버튼 유무와 관계없이 24x24 폭을 확보해 열 정렬 유지
+            hasChildren
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      iconSize: 18,
+                      tooltip: expanded ? 'Collapse' : 'Expand',
+                      onPressed: onToggle,
+                      icon: Icon(
+                        expanded ? Icons.expand_more : Icons.chevron_right,
+                      ),
+                    ),
+                  )
+                : const SizedBox(width: 24, height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _recentBlogTile(BuildContext context, BlogReviewSummary b) {
     return ListTile(
       dense: true,
@@ -353,123 +338,6 @@ class _SideBarWidgetState extends State<SidebarWidget> {
             )
           : null,
       onTap: () => Navigator.of(context).pushNamed('/blog', arguments: b.id),
-    );
-  }
-}
-
-class _SmoothExpansion extends StatefulWidget {
-  const _SmoothExpansion({
-    Key? key,
-    required this.title,
-    required this.children,
-    this.leading,
-    this.duration = const Duration(milliseconds: 260),
-    this.curve = Curves.easeOutCubic,
-    this.reverseCurve = Curves.easeInCubic,
-    this.tilePadding = const EdgeInsets.only(left: 0),
-    this.childPadding,
-    this.initiallyExpanded = false,
-  }) : super(key: key);
-
-  final Widget title;
-  final List<Widget> children;
-  final Widget? leading;
-  final Duration duration;
-  final Curve curve;
-  final Curve reverseCurve;
-  final EdgeInsetsGeometry tilePadding;
-  final EdgeInsetsGeometry? childPadding;
-  final bool initiallyExpanded;
-
-  @override
-  State<_SmoothExpansion> createState() => _SmoothExpansionState();
-}
-
-class _SmoothExpansionState extends State<_SmoothExpansion>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _size;
-  late final Animation<double> _fade;
-  late bool _expanded;
-
-  @override
-  void initState() {
-    super.initState();
-    _expanded = widget.initiallyExpanded;
-    _ctrl = AnimationController(vsync: this, duration: widget.duration);
-    _size = CurvedAnimation(
-      parent: _ctrl,
-      curve: widget.curve,
-      reverseCurve: widget.reverseCurve,
-    );
-    _fade = CurvedAnimation(
-      parent: _ctrl,
-      curve: const Interval(0.0, 1.0, curve: Curves.easeOut),
-    );
-    if (_expanded) _ctrl.value = 1.0;
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  void _toggle() {
-    setState(() => _expanded = !_expanded);
-    if (_expanded) {
-      _ctrl.forward();
-    } else {
-      _ctrl.reverse();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final iconColor = Theme.of(context).iconTheme.color;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          onTap: _toggle,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: widget.tilePadding,
-            child: Row(
-              children: [
-                if (widget.leading != null) ...[
-                  widget.leading!,
-                  const SizedBox(width: 8),
-                ],
-                Expanded(child: widget.title),
-                AnimatedBuilder(
-                  animation: _ctrl,
-                  builder: (_, __) => Transform.rotate(
-                    angle: _ctrl.value * math.pi,
-                    child: Icon(Icons.keyboard_arrow_down, color: iconColor),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        ClipRect(
-          child: FadeTransition(
-            opacity: _fade,
-            child: SizeTransition(
-              sizeFactor: _size,
-              axisAlignment: -1.0,
-              child: Padding(
-                padding: widget.childPadding ?? EdgeInsets.zero,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: widget.children,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

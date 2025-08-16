@@ -49,7 +49,7 @@ class BlogHomePage extends StatelessWidget {
                         labelColor: Theme.of(context).colorScheme.onSurface,
                         tabs: const [
                           Tab(text: '내 포스트'),
-                          Tab(text: '검색'),
+                          Tab(text: '둘러보기'),
                         ],
                       ),
                       const SizedBox(height: 12),

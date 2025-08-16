@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:paperlog_front/features/auth/view/login_page.dart';
 import 'package:paperlog_front/features/blog/view/blog_detail_page.dart';
+import 'package:paperlog_front/features/blog/view/blog_edit_page.dart';
 import 'package:paperlog_front/features/explore/view/explore_page.dart';
 import 'package:paperlog_front/features/explore/viewmodel/explore_viewmodel.dart';
 import 'package:paperlog_front/features/paper/view/paper_detail_page.dart';
@@ -78,7 +79,7 @@ class PaperLogApp extends StatelessWidget {
         '/blog/new': (ctx) =>
             BlogWritePage.fromArgs(ModalRoute.of(ctx)?.settings.arguments),
         '/blog/edit': (ctx) =>
-            BlogWritePage.fromArgs(ModalRoute.of(ctx)!.settings.arguments),
+            BlogEditPage.fromArgs(ModalRoute.of(ctx)?.settings.arguments),
       },
 
       //존재하지 않는 라우트 요청 시 처리
