@@ -143,7 +143,21 @@ class _LoginPageState extends State<LoginPage> {
                         width: double.infinity,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.shade700,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onPrimary,
+                            overlayColor: Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.12),
+                            disabledBackgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.12),
+                            disabledForegroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.38),
                             minimumSize: const Size.fromHeight(48),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(6),
