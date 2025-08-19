@@ -8,6 +8,7 @@ import '../../dashboard/widgets/sidebar_widget.dart';
 import '../../dashboard/viewmodel/dashboard_viewmodel.dart';
 import '../../dashboard/widgets/recommend_paper_card.dart';
 import '../../../core/models/paper_model.dart';
+import '../../paper/widgets/recommended_papers_list.dart';
 
 class ExplorePage extends StatefulWidget {
   final String initialQuery;
@@ -66,12 +67,22 @@ class _ExplorePageState extends State<ExplorePage> {
                     child: Consumer<ExploreViewModel>(
                       builder: (_, vm, __) {
                         if (!vm.hasSearched) {
-                          final recs = Paper.sampleList();
-                          return ListView.builder(
+                          return ListView(
                             padding: const EdgeInsets.all(16),
-                            itemCount: recs.length,
-                            itemBuilder: (_, i) =>
-                                RecommendPaperCard(paper: recs[i]),
+                            children: const [
+                              Text(
+                                '지금 인기 있는 논문',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 12),
+                              RecommendedPapersList(
+                                category: 'trending',
+                                limit: 6,
+                              ),
+                            ],
                           );
                         }
                         if (vm.isLoading) {
@@ -81,50 +92,34 @@ class _ExplorePageState extends State<ExplorePage> {
                         }
 
                         if (vm.errorMessage != null) {
-                          final recs = Paper.sampleList();
-                          return Column(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Text('검색에 실패했습니다.'),
-                              ),
-                              const Divider(),
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 8),
-                                child: Text('이런 논문은 어떠세요?'),
-                              ),
-                              Expanded(
-                                child: ListView.builder(
-                                  padding: const EdgeInsets.all(16),
-                                  itemCount: recs.length,
-                                  itemBuilder: (_, i) =>
-                                      RecommendPaperCard(paper: recs[i]),
-                                ),
+                          return ListView(
+                            padding: const EdgeInsets.all(16),
+                            children: const [
+                              Text('검색에 실패했습니다.'),
+                              Divider(),
+                              SizedBox(height: 8),
+                              Text('이런 논문은 어떠세요?'),
+                              SizedBox(height: 12),
+                              RecommendedPapersList(
+                                category: 'trending',
+                                limit: 6,
                               ),
                             ],
                           );
                         }
 
                         if (vm.papers.isEmpty) {
-                          final recs = Paper.sampleList();
-                          return Column(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Text('검색 결과가 없습니다.'),
-                              ),
-                              const Divider(),
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 8),
-                                child: Text('이런 논문은 어떠세요?'),
-                              ),
-                              Expanded(
-                                child: ListView.builder(
-                                  padding: const EdgeInsets.all(16),
-                                  itemCount: recs.length,
-                                  itemBuilder: (_, i) =>
-                                      RecommendPaperCard(paper: recs[i]),
-                                ),
+                          return ListView(
+                            padding: const EdgeInsets.all(16),
+                            children: const [
+                              Text('검색 결과가 없습니다.'),
+                              Divider(),
+                              SizedBox(height: 8),
+                              Text('이런 논문은 어떠세요?'),
+                              SizedBox(height: 12),
+                              RecommendedPapersList(
+                                category: 'trending',
+                                limit: 6,
                               ),
                             ],
                           );

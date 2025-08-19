@@ -75,6 +75,14 @@ class Paper {
 
     List<String> _ls(dynamic v) {
       if (v is List) return v.map((e) => e.toString()).toList();
+      if (v is String && v.trim().isNotEmpty) {
+        // "A, B, C" 또는 "A and B" 형태까지 안전 분리
+        return v
+            .split(RegExp(r'\s*,\s*|\s+and\s+'))
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
+      }
       return const <String>[];
     }
 
@@ -85,7 +93,11 @@ class Paper {
     }
 
     final raw =
-        json['published'] ?? json['publishDate'] ?? json['published_at'] ?? '';
+        json['published'] ??
+        json['publish_updated'] ??
+        json['publishDate'] ??
+        json['published_at'] ??
+        '';
     DateTime? publishedAt;
     if (raw is String && raw.isNotEmpty) {
       // 예: "2018-04-09T12:00:08"
@@ -131,56 +143,5 @@ class Paper {
       isLiked: (json['is_liked'] is bool) ? json['is_liked'] as bool : null,
       relatedBlogs: related,
     );
-  }
-
-  ///샘플 데이터 반환
-  static List<Paper> sampleList() {
-    return [
-      Paper(
-        id: '1706.03762',
-        title: 'Attention Is All You Need',
-        authors: [
-          'Ashish Vaswani',
-          'Noam Shazeer',
-          'Niki Parmar',
-          'Jakob Uszkoreit',
-        ],
-        year: '2017',
-        fields: ['cs.CL', 'cs.LG'],
-        pdfUrl: 'http://arxiv.org/abs/1706.03762v5',
-        abstractText:
-            'The dominant sequence transduction models are based on complex recurrent or convolutional neural networks... We propose a new simple network architecture, the Transformer...',
-        doi: '10.48550/arXiv.1706.03762',
-        likeCount: 1234,
-        isLiked: true,
-      ),
-      Paper(
-        id: '1512.03385',
-        title: 'Deep Residual Learning for Image Recognition',
-        authors: ['Kaiming He', 'Xiangyu Zhang', 'Shaoqing Ren', 'Jian Sun'],
-        year: '2015',
-        fields: ['cs.CV'],
-        pdfUrl: 'http://arxiv.org/abs/1512.03385v1',
-        abstractText:
-            'Deeper neural networks are more difficult to train. We present a residual learning framework to ease the training of networks that are substantially deeper than those used previously...',
-        doi: '10.1109/CVPR.2016.90',
-        likeCount: 987,
-        isLiked: false,
-      ),
-      Paper(
-        id: '1409.1556',
-        title:
-            'Very Deep Convolutional Networks for Large-Scale Image Recognition',
-        authors: ['Karen Simonyan', 'Andrew Zisserman'],
-        year: '2014',
-        fields: ['cs.CV', 'cs.NE'],
-        pdfUrl: 'http://arxiv.org/abs/1409.1556v6',
-        abstractText:
-            'In this work we investigate the effect of the convolutional network depth on its accuracy in the large-scale image recognition setting. Our main contribution is a thorough evaluation of networks of increasing depth...',
-        doi: '10.48550/arXiv.1409.1556',
-        likeCount: 852,
-        isLiked: null, // '좋아요'를 누르지 않은 상태
-      ),
-    ];
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:paperlog_front/features/dashboard/viewmodel/dashboard_viewmodel.dart';
-import 'package:paperlog_front/features/profile/widgets/edit_bio_dialog.dart';
 import 'package:provider/provider.dart';
 
 import '../viewmodel/profile_viewmodel.dart';
@@ -9,6 +8,7 @@ import '../widgets/profile_stat_widget.dart';
 import '../../dashboard/widgets/header_widget.dart';
 import '../../dashboard/widgets/sidebar_widget.dart';
 import '../../auth/viewmodel/auth_viewmodel.dart';
+import 'package:paperlog_front/features/profile/view/edit_profile_page.dart';
 
 import '../widgets/badge_card.dart';
 import '../widgets/interest_card.dart';
@@ -129,12 +129,19 @@ class ProfilePage extends StatelessWidget {
 
                                   OutlinedButton(
                                     onPressed: () async {
-                                      final newBio = await EditBioDialog.show(
-                                        context,
-                                        initial: vm.profile.bio,
-                                      );
-                                      if (newBio != null) {
-                                        vm.updateBio(newBio);
+                                      final updated =
+                                          await Navigator.of(
+                                            context,
+                                          ).push<bool>(
+                                            MaterialPageRoute(
+                                              builder: (_) => EditProfilePage(
+                                                initial: vm.profile,
+                                              ),
+                                            ),
+                                          );
+                                      if (updated == true) {
+                                        // 수정 후 최신 상태 다시 로드
+                                        vm.loadProfile();
                                       }
                                     },
                                     style: OutlinedButton.styleFrom(

@@ -38,7 +38,19 @@ class FolderTree extends StatelessWidget {
       return children.map((f) {
         final grandChildren = buildBranch(f.id);
         final papers = vm.itemsInFolder(f.id);
-        final paperRows = papers.map((e) => LibraryPaperRow(item: e)).toList();
+        final paperRows = papers
+            .map(
+              (e) => LibraryPaperRow(
+                item: e,
+                onDelete: () async {
+                  await vm.removePaperFromFolder(
+                    folderIdStr: f.id,
+                    paperIdStr: e.paper.id,
+                  );
+                },
+              ),
+            )
+            .toList();
 
         final composed = <Widget>[
           ...grandChildren,

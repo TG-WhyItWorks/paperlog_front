@@ -219,6 +219,41 @@ class LibraryViewModel extends ChangeNotifier {
     }
   }
 
+  /// 폴더 안의 특정 paper를 제거
+  Future<void> removePaperFromFolder({
+    required String folderIdStr,
+    required String paperIdStr,
+  }) async {
+    final fid = int.tryParse(folderIdStr);
+    if (fid == null) {
+      error = '잘못된 ID 형식입니다.(folderId)';
+      notifyListeners();
+      return;
+    }
+    final pid = int.tryParse(paperIdStr);
+    isLoading = true;
+    notifyListeners();
+    try {
+      await _folderService.removeItemFromFolder(
+        folderId: fid,
+        paperId: pid, // 정수일 때만 사용
+        paperArxivId: pid == null ? paperIdStr : null, // 정수 변환 실패 → arXiv로 삭제
+      );
+      // 로컬 매핑 및 카운트 반영
+      final set = _paperFolderMap[paperIdStr];
+      if (set != null && set.remove(folderIdStr)) {
+        if (set.isEmpty) _paperFolderMap.remove(paperIdStr);
+        _bumpFolderCount(folderIdStr, -1);
+      }
+      await refreshFolders();
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   // ------------------------------
   // 간단 새로고침 훅 (필요할 때 UI에서 호출)
   // ------------------------------

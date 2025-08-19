@@ -41,6 +41,13 @@ class PaperDetail {
 
     List<String> _ls(dynamic v) {
       if (v is List) return v.map((e) => e.toString()).toList();
+      if (v is String && v.trim().isNotEmpty) {
+        return v
+            .split(RegExp(r'\s*,\s*|\s+and\s+'))
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
+      }
       return const <String>[];
     }
 

@@ -174,6 +174,36 @@ class FolderService {
     }
   }
 
+  /// 폴더 안 항목 삭제 (DELETE /folders/{folderId}/items)
+  Future<void> removeItemFromFolder({
+    required int folderId,
+    int? paperId,
+    int? reviewId,
+    String? paperArxivId,
+  }) async {
+    if (paperId == null &&
+        reviewId == null &&
+        (paperArxivId == null || paperArxivId.isEmpty)) {
+      throw Exception('paperId, reviewId, paperArxivId 중 하나는 필요합니다.');
+    }
+    final uri = ApiConfig.uri('/folders/$folderId/items');
+    final res = await http
+        .delete(
+          uri,
+          headers: await _authHeaders(),
+          body: json.encode({
+            'folder_id': folderId,
+            'paper_id': paperId,
+            'review_id': reviewId,
+            'paper_arxiv_id': paperArxivId,
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+    if (res.statusCode != 200 && res.statusCode != 204) {
+      throw Exception('폴더 항목 삭제 실패: HTTP ${res.statusCode} ${res.body}');
+    }
+  }
+
   // ------------------------------
   // (구) 다건 추가 API 대체용(선택)
   // - 백엔드는 단건만 지원하므로 반복 호출
