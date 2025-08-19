@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/paper_model.dart';
-import '../../dashboard/widgets/recommend_paper_card.dart';
+import '../../explore/widgets/paper_card.dart'; // ← PaperCard 재사용
 import '../viewmodel/recommended_papers_viewmodel.dart';
 
 class RecommendedPapersList extends StatelessWidget {
@@ -10,7 +10,7 @@ class RecommendedPapersList extends StatelessWidget {
   const RecommendedPapersList({
     super.key,
     required this.category,
-    this.limit = 3,
+    this.limit = 6,
   });
 
   @override
@@ -28,28 +28,32 @@ class _Body extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<RecommendedPapersViewModel>();
+
     if (vm.loading) {
-      return const SizedBox(
-        height: 220,
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
         child: Center(child: CircularProgressIndicator()),
       );
     }
     if (vm.error != null) {
-      return SizedBox(height: 56, child: Text('추천 논문 로드 실패: ${vm.error}'));
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text('추천 논문 로드 실패: ${vm.error}'),
+      );
     }
     if (vm.items.isEmpty) {
-      return const SizedBox(height: 56, child: Text('추천할 논문이 아직 없어요.'));
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Text('추천할 논문이 아직 없어요.'),
+      );
     }
-    final recs = vm.items;
-    return SizedBox(
-      height: 220,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemBuilder: (_, i) => RecommendPaperCard(paper: recs[i]),
-        separatorBuilder: (_, __) => const SizedBox(width: 16),
-        itemCount: recs.length,
-      ),
+
+    final List<Paper> recs = vm.items;
+
+    // ⬇️ 부모(ListView)가 스크롤을 담당하므로 스크롤 위젯 사용하지 않음.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [for (final p in recs) PaperCard(paper: p)],
     );
   }
 }

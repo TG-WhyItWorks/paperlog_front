@@ -66,7 +66,8 @@ class BlogHomePage extends StatelessWidget {
 
                             // 🔽 검색 탭: 인자로 초기 검색 수행
                             ChangeNotifierProvider(
-                              create: (_) => BlogDiscoverViewModel()..load(),
+                              create: (_) =>
+                                  BlogDiscoverViewModel()..load(mockOnly: true),
                               child: const _DiscoverTab(),
                             ),
                           ],

@@ -5,15 +5,23 @@ import '../../paper/widgets/like_button.dart';
 
 class RecommendPaperCard extends StatelessWidget {
   final Paper paper;
-  const RecommendPaperCard({required this.paper, Key? key}) : super(key: key);
+  final EdgeInsetsGeometry? outerMargin; // ⬅️ 추가
+
+  const RecommendPaperCard({
+    required this.paper,
+    this.outerMargin, // ⬅️ 추가
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    //추천 카드
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      constraints: const BoxConstraints(maxWidth: 360),
+      margin:
+          outerMargin ??
+          const EdgeInsets.symmetric(horizontal: 12, vertical: 10), // ⬅️ 수정
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
@@ -27,14 +35,17 @@ class RecommendPaperCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            // 그리드에선 mainAxisExtent로 높이가 정해지므로 min/overflow 이슈가 줄어듭니다.
+            mainAxisSize: MainAxisSize.max,
             children: [
-              //상단: 날짜와 카테고리
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   _DateBadge(text: _dateText(paper)),
                   const SizedBox(width: 12),
-                  Expanded(
+                  Flexible(
+                    fit: FlexFit.loose,
                     child: Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -49,9 +60,10 @@ class RecommendPaperCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
 
-              //논문 제목
               Text(
                 paper.title,
+                maxLines: 2, // ⬅️ 제목 줄수 제한(그리드 높이에 맞춤)
+                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: theme.colorScheme.primary,
@@ -60,7 +72,6 @@ class RecommendPaperCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
 
-              //논문 저자
               if (paper.authors.isNotEmpty)
                 Text(
                   paper.authors.join(', '),
@@ -70,9 +81,10 @@ class RecommendPaperCard extends StatelessWidget {
                 ),
               const SizedBox(height: 10),
 
-              //논문 요약
-              if (paper.abstractText.isNotEmpty)
-                Container(
+              // 요약은 남는 공간을 쓰도록 Flexible로
+              Flexible(
+                fit: FlexFit.loose,
+                child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -87,10 +99,11 @@ class RecommendPaperCard extends StatelessWidget {
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),
+              ),
               const SizedBox(height: 10),
 
-              //하단의 액션 아이콘
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   _BookmarkButton(
                     onTap: () => SaveBookmarkDialog.show(context, paper: paper),
@@ -109,29 +122,29 @@ class RecommendPaperCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  String _dateText(Paper p) {
-    if (p.publishedAt != null) {
-      final d = p.publishedAt!;
-      const months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      return '${d.day.toString().padLeft(2, '0')} ${months[d.month - 1]} ${d.year}';
-    }
-    if (p.year.isNotEmpty) return p.year;
-    return '';
+String _dateText(Paper p) {
+  if (p.publishedAt != null) {
+    final d = p.publishedAt!;
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${d.day.toString().padLeft(2, '0')} ${months[d.month - 1]} ${d.year}';
   }
+  if (p.year.isNotEmpty) return p.year;
+  return '';
 }
 
 class _DateBadge extends StatelessWidget {
@@ -180,6 +193,7 @@ class _BookmarkButton extends StatelessWidget {
       style: TextButton.styleFrom(foregroundColor: t.colorScheme.onSurface),
       icon: const Icon(Icons.bookmark_border),
       label: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text('Bookmark'),
           SizedBox(width: 2),

@@ -13,7 +13,7 @@ class PaperRecommendService {
     String category, {
     int? limit, // 서버가 limit를 받지 않아도, 클라이언트에서 sublist로 제한
   }) async {
-    final path = '/api/search/papers/top/$category';
+    final path = '/api/arxiv/papers/top/$category';
     final uri = ApiConfig.uri(path);
     ApiConfig.logReq('[TOP_PAPERS] GET', uri);
 
