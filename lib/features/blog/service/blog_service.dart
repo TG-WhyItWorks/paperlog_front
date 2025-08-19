@@ -119,7 +119,51 @@ class BlogService {
         .toList();
   }
 
-  // 내용 검색 (백엔드 오타 "cotent")
+  /// 최신 포스트 (페이지네이션)
+  Future<List<BlogReviewSummary>> latest({
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final uri = ApiConfig.uri('/api/review', {
+      'page': '$page',
+      'page_size': '$pageSize',
+    });
+    final res = await http
+        .get(uri, headers: await _authHeaders())
+        .timeout(const Duration(seconds: 15));
+    if (res.statusCode != 200) {
+      throw Exception('최신 리뷰 조회 실패: ${res.statusCode}');
+    }
+    final list = json.decode(res.body) as List;
+    return list
+        .map((e) => BlogReviewSummary.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+  /// 인기(좋아요순) – keyword 비워두면 전체 인기
+  Future<List<BlogReviewSummary>> trending({
+    String keyword = '',
+    int skip = 0,
+    int limit = 10,
+  }) async {
+    final uri = ApiConfig.uri('/api/review/search_voteorder', {
+      'keyword': keyword,
+      'skip': '$skip',
+      'limit': '$limit',
+    });
+    final res = await http
+        .get(uri, headers: await _authHeaders())
+        .timeout(const Duration(seconds: 15));
+    if (res.statusCode != 200) {
+      throw Exception('인기 리뷰 조회 실패: ${res.statusCode}');
+    }
+    final list = json.decode(res.body) as List;
+    return list
+        .map((e) => BlogReviewSummary.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+  // 내용 검색
   Future<List<BlogReviewSummary>> searchByContent(
     String keyword, {
     int skip = 0,

@@ -174,9 +174,7 @@ class _PaperDetailedPageState extends State<PaperDetailPage>
           const SizedBox(height: 12),
           // 이 논문과 연관된 카테고리 기반 추천 (없으면 'trending')
           RecommendedPapersList(
-            category: detail.fields.isNotEmpty
-                ? detail.fields.first
-                : 'trending',
+            category: detail.fields.isNotEmpty ? detail.fields.first : 'cs.AI',
             limit: 6,
           ),
         ],

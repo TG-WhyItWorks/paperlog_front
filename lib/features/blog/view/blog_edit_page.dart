@@ -7,6 +7,9 @@ import '../../dashboard/viewmodel/dashboard_viewmodel.dart';
 import '../service/blog_service.dart';
 import '../../paper/widgets/paper_picker_sheet.dart';
 import '../../../core/models/paper_model.dart';
+import '../widgets/markdown_format_toolbar.dart';
+import '../models/compose_mode.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 class BlogEditPage extends StatefulWidget {
   final int reviewId;
@@ -61,6 +64,9 @@ class _BlogEditPageState extends State<BlogEditPage> {
   final _content = TextEditingController();
   final _paperId = TextEditingController();
   Paper? _selectedPaper;
+  final FocusNode _contentFocus = FocusNode();
+  String? _category;
+  ComposeMode _mode = ComposeMode.basic;
 
   bool _loading = false; // 페이지 로딩(상세 불러오기)용
   bool _saving = false; // 저장 버튼 중복방지
@@ -187,20 +193,115 @@ class _BlogEditPageState extends State<BlogEditPage> {
                         ),
                         const SizedBox(height: 12),
 
-                        TextField(
-                          controller: _title,
-                          decoration: const InputDecoration(labelText: '제목'),
+                        Row(
+                          children: [
+                            DropdownButton<String>(
+                              value: _category,
+                              hint: const Text('카테고리'),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'AI',
+                                  child: Text('AI'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Cloud',
+                                  child: Text('Cloud'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'DB',
+                                  child: Text('DB'),
+                                ),
+                              ],
+                              onChanged: (v) => setState(() => _category = v),
+                            ),
+                            const Spacer(),
+                            SegmentedButton<ComposeMode>(
+                              segments: const [
+                                ButtonSegment(
+                                  value: ComposeMode.basic,
+                                  label: Text('기본모드'),
+                                ),
+                                ButtonSegment(
+                                  value: ComposeMode.markdown,
+                                  label: Text('Markdown'),
+                                ),
+                              ],
+                              selected: <ComposeMode>{_mode},
+                              onSelectionChanged: (s) =>
+                                  setState(() => _mode = s.first),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 8),
-
                         TextField(
-                          controller: _content,
-                          maxLines: 12,
+                          controller: _title,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
                           decoration: const InputDecoration(
-                            labelText: '내용',
-                            alignLabelWithHint: true,
+                            hintText: '제목을 입력하세요',
+                            border: InputBorder.none,
                           ),
                         ),
+                        const Divider(height: 24),
+                        if (_mode == ComposeMode.basic) ...[
+                          MarkdownFormatToolbar(
+                            controller: _content,
+                            focusNode: _contentFocus,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _content,
+                            focusNode: _contentFocus,
+                            minLines: 16,
+                            maxLines: null,
+                            decoration: const InputDecoration(
+                              hintText: '본문을 입력하세요',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ] else ...[
+                          LayoutBuilder(
+                            builder: (ctx, c) {
+                              final wide = c.maxWidth >= 1000;
+                              final editor = TextField(
+                                controller: _content,
+                                minLines: 18,
+                                maxLines: null,
+                                style: const TextStyle(fontFamily: 'monospace'),
+                                decoration: const InputDecoration(
+                                  hintText: 'Markdown을 입력하세요',
+                                  border: OutlineInputBorder(),
+                                ),
+                              );
+                              return ValueListenableBuilder<TextEditingValue>(
+                                valueListenable: _content,
+                                builder: (_, __, ___) {
+                                  final pv = _MarkdownPreview(
+                                    md: _content.text,
+                                  );
+                                  if (wide) {
+                                    return Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(child: editor),
+                                        const SizedBox(width: 12),
+                                        Expanded(child: pv),
+                                      ],
+                                    );
+                                  }
+                                  return Column(
+                                    children: [
+                                      editor,
+                                      const SizedBox(height: 12),
+                                      pv,
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ],
                         const SizedBox(height: 8),
 
                         GestureDetector(
@@ -279,6 +380,42 @@ class _BlogEditPageState extends State<BlogEditPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MarkdownPreview extends StatelessWidget {
+  final String md;
+  const _MarkdownPreview({required this.md});
+
+  @override
+  Widget build(BuildContext context) {
+    // 상세 페이지와 비슷한 스타일의 미리보기
+    final theme = Theme.of(context);
+    final sheet = MarkdownStyleSheet.fromTheme(theme).copyWith(
+      p: theme.textTheme.bodyLarge?.copyWith(height: 1.8, fontSize: 16),
+      blockquoteDecoration: BoxDecoration(
+        border: Border(
+          left: BorderSide(
+            color: theme.colorScheme.primary.withOpacity(.25),
+            width: 4,
+          ),
+        ),
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(.2),
+      ),
+      codeblockDecoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.dividerColor),
+      ),
+    );
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.dividerColor),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: MarkdownBody(selectable: false, data: md, styleSheet: sheet),
     );
   }
 }

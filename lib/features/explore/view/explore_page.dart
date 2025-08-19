@@ -77,7 +77,7 @@ class _ExplorePageState extends State<ExplorePage> {
                               ),
                               SizedBox(height: 12),
                               RecommendedPapersList(
-                                category: 'trending',
+                                category: 'cs.AI',
                                 limit: 6,
                               ),
                             ],
@@ -99,7 +99,7 @@ class _ExplorePageState extends State<ExplorePage> {
                               Text('이런 논문은 어떠세요?'),
                               SizedBox(height: 12),
                               RecommendedPapersList(
-                                category: 'trending',
+                                category: 'cs.AI',
                                 limit: 6,
                               ),
                             ],
@@ -116,7 +116,7 @@ class _ExplorePageState extends State<ExplorePage> {
                               Text('이런 논문은 어떠세요?'),
                               SizedBox(height: 12),
                               RecommendedPapersList(
-                                category: 'trending',
+                                category: 'cs.AI',
                                 limit: 6,
                               ),
                             ],
