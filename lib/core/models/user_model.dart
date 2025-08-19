@@ -13,11 +13,18 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final avatar =
+        (json['avatarUrl'] ??
+                json['avatar_url'] ??
+                json['avatar'] ??
+                json['profileImage'] ??
+                json['profile_image'])
+            as String?;
     return UserModel(
       id: json['id'] as int,
       username: json['username'] as String,
       email: json['email'] as String,
-      avatarUrl: (json['avatarUrl'] ?? json['avatarUrl']) as String?,
+      avatarUrl: avatar,
     );
   }
 

@@ -9,8 +9,11 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.lightBackground,
       primaryColor: AppColors.lightPrimary,
       colorScheme: ColorScheme.light(
-        primary: AppColors.lightPrimary,
+        primary: AppColors.lightPrimary, // KyungHee Red
         onPrimary: AppColors.lightOnPrimary,
+        secondary: AppColors.khBlue, // KyungHee Blue
+        onSecondary: Colors.white,
+        tertiary: AppColors.khGold, // KyungHee Gold
         surface: AppColors.lightSurface,
         background: AppColors.lightBackground,
         onSurface: AppColors.lightText,
@@ -30,6 +33,7 @@ class AppTheme {
         ),
         iconTheme: IconThemeData(color: AppColors.lightOnPrimary),
       ),
+      dividerColor: AppColors.khSilver,
     );
   }
 
@@ -39,8 +43,11 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.darkBackground,
       primaryColor: AppColors.darkPrimary,
       colorScheme: ColorScheme.dark(
-        primary: AppColors.darkPrimary,
+        primary: AppColors.darkPrimary, // KyungHee Red
         onPrimary: AppColors.darkOnPrimary,
+        secondary: AppColors.khGold, // Gold 포인트
+        onSecondary: Colors.black,
+        tertiary: AppColors.khBlue, // Blue 서브 톤
         surface: AppColors.darkSurface,
         background: AppColors.darkBackground,
         onSurface: AppColors.darkText,
@@ -60,6 +67,7 @@ class AppTheme {
         ),
         iconTheme: IconThemeData(color: AppColors.darkOnPrimary),
       ),
+      dividerColor: AppColors.khCoolGray,
     );
   }
 }

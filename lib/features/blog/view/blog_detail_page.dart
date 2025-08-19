@@ -10,6 +10,9 @@ import '../../../core/models/review_models.dart';
 import '../viewmodel/blog_detail_viewmodel.dart';
 import '../../auth/viewmodel/auth_viewmodel.dart';
 import '../widgets/blog_markdown_with_toc.dart';
+import '../../profile/widgets/user_avatar.dart';
+import '../../profile/widgets/profile_avatar_widget.dart';
+import '../../../core/config/api_config.dart';
 
 class BlogDetailPage extends StatefulWidget {
   final int reviewId;
@@ -34,6 +37,26 @@ class BlogDetailPage extends StatefulWidget {
 class _BlogDetailPageState extends State<BlogDetailPage> {
   bool _trackedRecent = false; // 최근 보기 기록 플래그
   final _commentCtrl = TextEditingController();
+
+  // 상대경로 → 절대경로로 바꿔서 Image.network에 안전하게 넣어주기
+  String _absUrl(String? url) {
+    if (url == null) return '';
+    final u = url.trim();
+    if (u.isEmpty) return '';
+    final parsed = Uri.tryParse(u);
+    // 이미 http/https 같은 스킴이 있으면 그대로 사용
+    if (parsed != null && parsed.hasScheme) return u;
+    // 프로토콜 상대경로 //cdn... 처리를 위한 보강 (웹에서 자주 나옴)
+    if (u.startsWith('//')) return 'https:$u';
+    try {
+      // ApiConfig.uri('/path') → 절대 URI
+      return ApiConfig.uri(u).toString();
+    } catch (e) {
+      debugPrint('absUrl fallback for "$u": $e');
+      // 마지막 보호: 그대로 반환 (개발 중 확인용)
+      return u;
+    }
+  }
 
   @override
   void dispose() {
@@ -142,14 +165,9 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
                                     const SizedBox(height: 8),
                                     Row(
                                       children: [
-                                        CircleAvatar(
-                                          radius: 12,
-                                          child: Text(
-                                            (r.user?.username ?? 'U')
-                                                .characters
-                                                .first
-                                                .toUpperCase(),
-                                          ),
+                                        ProfileAvatar(
+                                          avatarUrl: _absUrl(r.user?.avatarUrl),
+                                          size: 24,
                                         ),
                                         const SizedBox(width: 8),
                                         Text(r.user?.username ?? 'unknown'),
@@ -344,7 +362,16 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
                       ...r.comments.map(
                         (c) => Card(
                           child: ListTile(
-                            leading: const Icon(Icons.account_circle_outlined),
+                            leading: CircleAvatar(
+                              radius: 14,
+                              backgroundImage:
+                                  (_absUrl(c.user?.avatarUrl)).isNotEmpty
+                                  ? NetworkImage(_absUrl(c.user?.avatarUrl))
+                                  : null,
+                              child: (_absUrl(c.user?.avatarUrl)).isEmpty
+                                  ? const Icon(Icons.person)
+                                  : null,
+                            ),
                             title: Text(c.user?.username ?? 'anon'),
                             subtitle: Text(c.content),
                             trailing: c.createDate != null

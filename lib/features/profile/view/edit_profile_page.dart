@@ -231,9 +231,35 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 children: [
                                   TextFormField(
                                     controller: _nameCtrl,
-                                    decoration: const InputDecoration(
+                                    decoration: InputDecoration(
                                       labelText: '이름(닉네임)',
                                       hintText: '표시할 이름을 입력하세요',
+
+                                      labelStyle: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                      ),
+                                      floatingLabelStyle: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                      ),
+                                      enabledBorder: UnderlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          color: Theme.of(context).dividerColor,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.secondary,
+                                          width: 2.0,
+                                        ),
+                                      ),
                                     ),
                                     textAlign: TextAlign.start,
                                     textAlignVertical: TextAlignVertical.center,
@@ -252,19 +278,71 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                     maxLines: 10,
                                     textAlign: TextAlign.start,
                                     textAlignVertical: TextAlignVertical.top,
-                                    decoration: const InputDecoration(
+                                    decoration: InputDecoration(
                                       labelText: 'Bio',
                                       hintText: '간단한 소개를 적어주세요 (최대 300자)',
                                       alignLabelWithHint: true,
-                                      contentPadding: EdgeInsets.fromLTRB(
+                                      contentPadding: const EdgeInsets.fromLTRB(
                                         12,
                                         12,
                                         12,
                                         12,
                                       ),
-                                      border: OutlineInputBorder(),
-                                      enabledBorder: OutlineInputBorder(),
-                                      focusedBorder: OutlineInputBorder(),
+                                      labelStyle: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                      ),
+                                      floatingLabelStyle: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                      ),
+                                      // 모드별(라이트/다크) 자동 적용
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          color: Theme.of(
+                                            context,
+                                          ).dividerColor, // 기본 테두리
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          color: Theme.of(context).dividerColor,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          // 라이트=KyungHee Blue, 다크=KyungHee Gold 로 동작(secondary)
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.secondary,
+                                          width: 1.8,
+                                        ),
+                                      ),
+                                      errorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.error,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      focusedErrorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.error,
+                                          width: 1.8,
+                                        ),
+                                      ),
                                     ),
                                     validator: (v) {
                                       final t = (v ?? '');

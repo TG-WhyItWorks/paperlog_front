@@ -4,7 +4,6 @@ import '../../dashboard/widgets/header_widget.dart';
 import '../../dashboard/widgets/sidebar_widget.dart';
 import '../viewmodel/blog_feed_viewmodel.dart';
 import '../viewmodel/blog_search_viewmodel.dart';
-import '../widgets/review_card.dart';
 import '../widgets/review_list_item.dart';
 import '../viewmodel/blog_discover_viewmodel.dart';
 import '../widgets/review_ranking_item.dart';
@@ -63,7 +62,7 @@ class BlogHomePage extends StatelessWidget {
                       Expanded(
                         child: TabBarView(
                           children: [
-                            const _MyBlogTab(),
+                            _MyBlogTab(),
 
                             // 🔽 검색 탭: 인자로 초기 검색 수행
                             ChangeNotifierProvider(
@@ -125,6 +124,7 @@ class _MyBlogTab extends StatelessWidget {
                       '전체 글',
                       style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
+                        color: Theme.of(ctx).colorScheme.onSurface,
                       ),
                     ),
                     const Spacer(),

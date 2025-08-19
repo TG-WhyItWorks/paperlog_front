@@ -42,15 +42,14 @@ class PaperLogApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeMode = context.watch<ThemeProvider>().mode;
+    final themeProv = context.watch<ThemeProvider>();
 
     return MaterialApp(
       title: 'PaperLog',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
-
+      theme: AppTheme.lightTheme, // KyungHee Light
+      darkTheme: AppTheme.darkTheme, // KyungHee Dark
+      themeMode: context.watch<ThemeProvider>().mode,
       //라우트 정리
       routes: {
         '/': (_) => const MainScreen(),
