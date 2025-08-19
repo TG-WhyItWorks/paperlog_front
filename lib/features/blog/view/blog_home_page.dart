@@ -5,6 +5,7 @@ import '../../dashboard/widgets/sidebar_widget.dart';
 import '../viewmodel/blog_feed_viewmodel.dart';
 import '../viewmodel/blog_search_viewmodel.dart';
 import '../widgets/review_card.dart';
+import '../widgets/review_list_item.dart';
 
 class BlogHomePage extends StatelessWidget {
   const BlogHomePage({super.key});
@@ -41,7 +42,10 @@ class BlogHomePage extends StatelessWidget {
               VerticalDivider(width: 1, color: Theme.of(context).dividerColor),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 16,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -111,64 +115,93 @@ class _MyBlogTab extends StatelessWidget {
     if (vm.loading) return const Center(child: CircularProgressIndicator());
     if (vm.error != null) return Center(child: Text('로드 실패: ${vm.error}'));
     if (vm.items.isEmpty) return const Center(child: Text('작성한 포스트가 없습니다.'));
-    return ListView.separated(
-      itemCount: vm.items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (ctx, i) {
-        final s = vm.items[i];
-        return ReviewCard(
-          summary: s,
-          canManage: true, // 내 글 탭이므로 관리 허용
-          onTap: () async {
-            await Navigator.of(ctx).pushNamed('/blog', arguments: s.id);
-            await ctx.read<BlogFeedViewModel>().loadMine();
-          },
-          onEdit: () async {
-            final updated = await Navigator.of(ctx).pushNamed(
-              '/blog/edit',
-              arguments: {
-                'reviewId': s.id,
-                'title': s.title,
-                'content': s.content, // summary에 있는 값으로 미리 채움
-                // paperId는 update에서 사용하지 않으니 생략 가능
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 980),
+        child: ListView.separated(
+          itemCount: vm.items.length + 1,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (ctx, i) {
+            // 헤더 섹션
+            if (i == 0) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    Text(
+                      '전체 글',
+                      style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.view_list_outlined),
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.view_module_outlined),
+                    ),
+                  ],
+                ),
+              );
+            }
+            final s = vm.items[i - 1];
+            return ReviewListItem(
+              summary: s,
+              canManage: true,
+              onTap: () async {
+                await Navigator.of(ctx).pushNamed('/blog', arguments: s.id);
+                await ctx.read<BlogFeedViewModel>().loadMine();
+              },
+              onEdit: () async {
+                final updated = await Navigator.of(ctx).pushNamed(
+                  '/blog/edit',
+                  arguments: {
+                    'reviewId': s.id,
+                    'title': s.title,
+                    'content': s.content,
+                  },
+                );
+                if (updated == true)
+                  await ctx.read<BlogFeedViewModel>().loadMine();
+              },
+              onDelete: () async {
+                final ok = await showDialog<bool>(
+                  context: ctx,
+                  builder: (_) => AlertDialog(
+                    title: const Text('삭제'),
+                    content: const Text('정말 삭제할까요?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('취소'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('삭제'),
+                      ),
+                    ],
+                  ),
+                );
+                if (ok != true) return;
+                try {
+                  await ctx.read<BlogFeedViewModel>().deleteReview(s.id);
+                  ScaffoldMessenger.of(
+                    ctx,
+                  ).showSnackBar(const SnackBar(content: Text('삭제 완료')));
+                } catch (e) {
+                  ScaffoldMessenger.of(
+                    ctx,
+                  ).showSnackBar(SnackBar(content: Text('삭제 실패: $e')));
+                }
               },
             );
-            if (updated == true) {
-              await ctx.read<BlogFeedViewModel>().loadMine();
-            }
           },
-          onDelete: () async {
-            final ok = await showDialog<bool>(
-              context: ctx,
-              builder: (_) => AlertDialog(
-                title: const Text('삭제'),
-                content: const Text('정말 삭제할까요?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    child: const Text('취소'),
-                  ),
-                  FilledButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    child: const Text('삭제'),
-                  ),
-                ],
-              ),
-            );
-            if (ok != true) return;
-            try {
-              await ctx.read<BlogFeedViewModel>().deleteReview(s.id);
-              ScaffoldMessenger.of(
-                ctx,
-              ).showSnackBar(const SnackBar(content: Text('삭제 완료')));
-            } catch (e) {
-              ScaffoldMessenger.of(
-                ctx,
-              ).showSnackBar(SnackBar(content: Text('삭제 실패: $e')));
-            }
-          },
-        );
-      },
+        ),
+      ),
     );
   }
 }
@@ -263,10 +296,43 @@ class _SearchTabState extends State<_SearchTab> {
         const SizedBox(height: 8),
         if (vm.error != null) Text('검색 실패: ${vm.error}'),
         Expanded(
-          child: ListView.separated(
-            itemCount: vm.results.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, i) => ReviewCard(summary: vm.results[i]),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 980),
+              child: ListView.separated(
+                itemCount: vm.results.length + (vm.results.isEmpty ? 0 : 1),
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (_, i) {
+                  if (vm.results.isEmpty) return const SizedBox.shrink();
+                  if (i == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            '검색 결과',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            onPressed: () {},
+                            icon: const Icon(Icons.view_list_outlined),
+                          ),
+                          IconButton(
+                            onPressed: () {},
+                            icon: const Icon(Icons.view_module_outlined),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  final s = vm.results[i - 1];
+                  return ReviewListItem(summary: s);
+                },
+              ),
+            ),
           ),
         ),
       ],

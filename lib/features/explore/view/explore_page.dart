@@ -6,8 +6,6 @@ import '../widgets/paper_card.dart';
 import '../../dashboard/widgets/header_widget.dart';
 import '../../dashboard/widgets/sidebar_widget.dart';
 import '../../dashboard/viewmodel/dashboard_viewmodel.dart';
-import '../../dashboard/widgets/recommend_paper_card.dart';
-import '../../../core/models/paper_model.dart';
 import '../../paper/widgets/recommended_papers_list.dart';
 
 class ExplorePage extends StatefulWidget {
