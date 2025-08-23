@@ -101,84 +101,92 @@ class _PaperDetailedPageState extends State<PaperDetailPage>
       _trackedRecent = true;
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const PaperBreadcrumb(),
-          const SizedBox(height: 16),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+          child: ConstrainedBox(
+            // ✅ 스크롤 영역의 가로폭을 강제: 자식 Column이 전체 폭을 사용
+            constraints: BoxConstraints(minWidth: constraints.maxWidth),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const PaperBreadcrumb(),
+                const SizedBox(height: 16),
 
-          // 제목/메타/다운로드
-          PaperHeader(
-            title: detail.title,
-            authors: detail.authors,
-            year: detail.year,
-            fields: detail.fields,
-            pdfUrl: detail.pdfUrl,
-          ),
+                // 제목/메타/다운로드
+                PaperHeader(
+                  title: detail.title,
+                  authors: detail.authors,
+                  year: detail.year,
+                  fields: detail.fields,
+                  pdfUrl: detail.pdfUrl,
+                ),
 
-          const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-          //(추상/번역/요약) 탭
-          PaperTabs(
-            abstractText: detail.abstractText,
-            translatedAbstract: detail.translatedAbstract,
-            blogSummary: detail.blogSummary,
-            height: 300,
-          ),
+                //(추상/번역/요약) 탭
+                PaperTabs(
+                  abstractText: detail.abstractText,
+                  translatedAbstract: detail.translatedAbstract,
+                  blogSummary: detail.blogSummary,
+                  height: 300,
+                ),
 
-          const SizedBox(height: 32),
-          // 🔽 추가: 이 논문 리뷰(좋아요 많은 순)
-          Text(
-            'Review Blogs (Top Likes)',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          PaperReviewList(paperTitle: detail.title, limit: 10),
-          const SizedBox(height: 8),
+                const SizedBox(height: 32),
+                // 🔽 추가: 이 논문 리뷰(좋아요 많은 순)
+                Text(
+                  'Review Blogs (Top Likes)',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                PaperReviewList(paperTitle: detail.title, limit: 10),
+                const SizedBox(height: 8),
 
-          // 🔽 추가: 더보기(검색 탭으로 이동)
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: () {
-                Navigator.of(context).pushNamed(
-                  '/blogs',
-                  arguments: {
-                    'tab': 'search', // 검색 탭으로 열기
-                    'keyword': detail.title, // 논문 제목으로 검색
-                    'orderByVotes': true, // 좋아요순
-                  },
-                );
-              },
-              icon: const Icon(Icons.open_in_new),
-              label: const Text('더보기'),
+                // 🔽 추가: 더보기(검색 탭으로 이동)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pushNamed(
+                        '/blogs',
+                        arguments: {
+                          'tab': 'search', // 검색 탭으로 열기
+                          'keyword': detail.title, // 논문 제목으로 검색
+                          'orderByVotes': true, // 좋아요순
+                        },
+                      );
+                    },
+                    icon: const Icon(Icons.open_in_new),
+                    label: const Text('더보기'),
+                  ),
+                ),
+
+                // const SizedBox(height: 24),
+
+                // //블로그 추천
+                // Text(
+                //   'Related Blog Posts',
+                //   style: Theme.of(
+                //     context,
+                //   ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
+                // ),
+
+                // const SizedBox(height: 12),
+                // ...detail.relatedBlogs.map((b) => BlogPostCard(blog: b)),
+                // const SizedBox(height: 12),
+                // // 이 논문과 연관된 카테고리 기반 추천 (없으면 'trending')
+                // RecommendedPapersList(
+                //   category: detail.fields.isNotEmpty ? detail.fields.first : 'cs.AI',
+                //   limit: 6,
+                // ),
+              ],
             ),
           ),
-
-          const SizedBox(height: 24),
-
-          //블로그 추천
-          Text(
-            'Related Blog Posts',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
-          ),
-
-          const SizedBox(height: 12),
-          ...detail.relatedBlogs.map((b) => BlogPostCard(blog: b)),
-          const SizedBox(height: 12),
-          // 이 논문과 연관된 카테고리 기반 추천 (없으면 'trending')
-          RecommendedPapersList(
-            category: detail.fields.isNotEmpty ? detail.fields.first : 'cs.AI',
-            limit: 6,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

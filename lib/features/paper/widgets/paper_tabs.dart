@@ -19,8 +19,10 @@ class PaperTabs extends StatelessWidget {
     return DefaultTabController(
       length: 3,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TabBar(
+            isScrollable: false,
             labelColor: Theme.of(context).colorScheme.primary,
             unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color,
             indicatorColor: Theme.of(context).colorScheme.primary,
@@ -32,19 +34,44 @@ class PaperTabs extends StatelessWidget {
           ),
           SizedBox(
             height: height,
+            width: double.infinity,
             child: TabBarView(
               children: [
                 SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
-                  child: Text(abstractText),
+                  child: SelectableText(
+                    abstractText,
+                    textAlign: TextAlign.left,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      height: 1.7, // 줄간격
+                      fontSize: 15,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
                 ),
                 SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
-                  child: Text(translatedAbstract),
+                  child: SelectableText(
+                    translatedAbstract,
+                    textAlign: TextAlign.left,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      height: 1.7,
+                      fontSize: 15,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
                 ),
                 SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
-                  child: Text(blogSummary),
+                  child: SelectableText(
+                    blogSummary,
+                    textAlign: TextAlign.left,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      height: 1.7,
+                      fontSize: 15,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
                 ),
               ],
             ),

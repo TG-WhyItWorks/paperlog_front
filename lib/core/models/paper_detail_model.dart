@@ -2,6 +2,18 @@
 import 'package:intl/intl.dart';
 import 'review_models.dart';
 
+String _normalizeAbstract(String raw) {
+  if (raw.trim().isEmpty) return '';
+  var t = raw.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+  // 앞뒤 공백이 낀 단일 개행을 공백으로
+  t = t.replaceAll(RegExp(r'[ \t]*\n[ \t]*(?!\n)'), ' ');
+  // 3개 이상 연속 개행은 문단 개행 2개로 축약
+  t = t.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+  // 중복 공백/탭 축약
+  t = t.replaceAll(RegExp(r'[ \t]{2,}'), ' ');
+  return t.trim();
+}
+
 class PaperDetail {
   final String id; // arxiv_id
   final String title;
@@ -82,7 +94,7 @@ class PaperDetail {
       year: year,
       fields: _ls(json['categories'] ?? json['tags']),
       pdfUrl: _s(json['link'] ?? json['pdfUrl'] ?? json['pdf_url']),
-      abstractText: _s(json['summary'] ?? json['abstract']),
+      abstractText: _normalizeAbstract(_s(json['summary'] ?? json['abstract'])),
       translatedAbstract: _s(json['translated_abstract'], '번역된 초록이 여기에 표시됩니다.'),
       blogSummary: _s(json['blog_summary'], '블로그 요약이 여기에 표시됩니다.'),
       relatedBlogs: related,

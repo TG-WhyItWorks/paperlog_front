@@ -1,6 +1,18 @@
 import 'package:intl/intl.dart';
 import 'review_models.dart';
 
+String _normalizeAbstract(String raw) {
+  if (raw.trim().isEmpty) return '';
+  var t = raw.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+  // 앞뒤 공백이 낀 단일 개행을 공백으로
+  t = t.replaceAll(RegExp(r'[ \t]*\n[ \t]*(?!\n)'), ' ');
+  // 3개 이상 연속 개행은 문단 개행 2개로 축약
+  t = t.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+  // 중복 공백/탭 축약
+  t = t.replaceAll(RegExp(r'[ \t]{2,}'), ' ');
+  return t.trim();
+}
+
 class Paper {
   final String id;
   final String title;
@@ -136,7 +148,7 @@ class Paper {
       year: year,
       fields: _ls(json['categories'] ?? json['tags']),
       pdfUrl: _s(json['link'] ?? json['pdfUrl'] ?? json['pdf_url']),
-      abstractText: _s(json['summary'] ?? json['abstract']),
+      abstractText: _normalizeAbstract(_s(json['summary'] ?? json['abstract'])),
       publishedAt: publishedAt,
       doi: (json['doi'] == null) ? null : json['doi'].toString(),
       likeCount: _i(json['like_count']),
