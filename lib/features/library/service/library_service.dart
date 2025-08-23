@@ -39,9 +39,9 @@ class LibraryService {
         }).toList();
       }
       // 실패하면 샘플로 폴백
-      return _fallbackSamples();
+      return [];
     } catch (_) {
-      return _fallbackSamples();
+      return [];
     }
   }
 
@@ -59,20 +59,6 @@ class LibraryService {
       default:
         return LibrarySection.private;
     }
-  }
-
-  List<LibraryItem> _fallbackSamples() {
-    final samples = Paper.sampleList();
-    return [
-      LibraryItem(paper: samples[0], section: LibrarySection.wantToRead),
-      LibraryItem(paper: samples[1], section: LibrarySection.reading),
-      LibraryItem(paper: samples[2], section: LibrarySection.completed),
-      LibraryItem(
-        paper: samples[0].copyWith(id: 'pvt-1'),
-        section: LibrarySection.private,
-        isPrivate: true,
-      ),
-    ];
   }
 
   // 백엔드가 기대하는 섹션 문자열로 변환

@@ -16,6 +16,35 @@ class ProfileModel {
     required this.following,
   });
 
+  factory ProfileModel.fromJson(Map<String, dynamic> json) {
+    final avatar =
+        (json['avatarUrl'] ??
+                json['avatar_url'] ??
+                json['avatar'] ??
+                json['profileImage'] ??
+                json['profile_image'] ??
+                json['image'])
+            as String? ??
+        '';
+    return ProfileModel(
+      avatarUrl: avatar,
+      username: (json['username'] ?? json['name'] ?? '') as String,
+      bio: (json['bio'] ?? json['introduce'] ?? '') as String,
+      subtitle: (json['subtitle'] ?? json['title'] ?? '') as String,
+      followers: (json['followers'] ?? json['follower_count'] ?? 0) as int,
+      following: (json['following'] ?? json['following_count'] ?? 0) as int,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'avatarUrl': avatarUrl,
+    'username': username,
+    'bio': bio,
+    'subtitle': subtitle,
+    'followers': followers,
+    'following': following,
+  };
+
   ProfileModel copyWith({
     String? avatarUrl,
     String? username,

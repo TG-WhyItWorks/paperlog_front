@@ -1,6 +1,18 @@
 // lib/core/models/paper_detail_model.dart
 import 'package:intl/intl.dart';
-import 'blog_post_model.dart';
+import 'review_models.dart';
+
+String _normalizeAbstract(String raw) {
+  if (raw.trim().isEmpty) return '';
+  var t = raw.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+  // 앞뒤 공백이 낀 단일 개행을 공백으로
+  t = t.replaceAll(RegExp(r'[ \t]*\n[ \t]*(?!\n)'), ' ');
+  // 3개 이상 연속 개행은 문단 개행 2개로 축약
+  t = t.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+  // 중복 공백/탭 축약
+  t = t.replaceAll(RegExp(r'[ \t]{2,}'), ' ');
+  return t.trim();
+}
 
 class PaperDetail {
   final String id; // arxiv_id
@@ -12,7 +24,7 @@ class PaperDetail {
   final String translatedAbstract;
   final String blogSummary;
   final String pdfUrl; // link
-  final List<BlogPost> relatedBlogs;
+  final List<BlogReviewSummary> relatedBlogs;
 
   // 선택: 응답에 있을 수 있는 필드들
   final String? doi;
@@ -41,6 +53,13 @@ class PaperDetail {
 
     List<String> _ls(dynamic v) {
       if (v is List) return v.map((e) => e.toString()).toList();
+      if (v is String && v.trim().isNotEmpty) {
+        return v
+            .split(RegExp(r'\s*,\s*|\s+and\s+'))
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
+      }
       return const <String>[];
     }
 
@@ -60,13 +79,13 @@ class PaperDetail {
     final year = DateFormat('yyyy').format(dt);
 
     // reviews → BlogPost[]
-    final reviews = (json['reviews'] is List)
+    final reviewsRaw = (json['reviews'] is List)
         ? (json['reviews'] as List)
         : const [];
-    final blogs = reviews.map((e) {
-      if (e is Map<String, dynamic>) return BlogPost.fromJson(e);
-      return BlogPost(title: 'Blog', excerpt: '', url: '', imageUrl: null);
-    }).toList();
+    final related = reviewsRaw
+        .whereType<Map>()
+        .map((e) => BlogReviewSummary.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
 
     return PaperDetail(
       id: _s(json['arxiv_id'] ?? json['id']),
@@ -75,10 +94,10 @@ class PaperDetail {
       year: year,
       fields: _ls(json['categories'] ?? json['tags']),
       pdfUrl: _s(json['link'] ?? json['pdfUrl'] ?? json['pdf_url']),
-      abstractText: _s(json['summary'] ?? json['abstract']),
+      abstractText: _normalizeAbstract(_s(json['summary'] ?? json['abstract'])),
       translatedAbstract: _s(json['translated_abstract'], '번역된 초록이 여기에 표시됩니다.'),
       blogSummary: _s(json['blog_summary'], '블로그 요약이 여기에 표시됩니다.'),
-      relatedBlogs: blogs,
+      relatedBlogs: related,
       doi: json['doi'] == null ? null : json['doi'].toString(),
       likeCount: _i(json['like_count']),
       isLiked: json['is_liked'] is bool ? json['is_liked'] as bool : null,

@@ -62,16 +62,16 @@ class LibraryRecentTab extends StatelessWidget {
                   context,
                 ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
-              subtitle: (b.source?.isNotEmpty ?? false)
+              subtitle: (b.user?.username.isNotEmpty ?? false)
                   ? Text(
-                      b.source!,
+                      b.user!.username,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall,
                     )
                   : null,
               onTap: () =>
-                  Navigator.of(context).pushNamed('/blog', arguments: b.url),
+                  Navigator.of(context).pushNamed('/blog', arguments: b.id),
             ),
           ),
       ],

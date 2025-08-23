@@ -133,4 +133,9 @@ class ProfileViewmodel extends ChangeNotifier {
     _profile = _profile.copyWith(bio: newBio);
     notifyListeners();
   }
+
+  void applyProfile(ProfileModel p) {
+    _profile = p;
+    notifyListeners();
+  }
 }

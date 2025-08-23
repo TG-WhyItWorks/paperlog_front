@@ -8,7 +8,8 @@ import '../../../shared/prefs/prefs_provider.dart' as prefs;
 
 class LibraryPaperRow extends StatefulWidget {
   final LibraryItem item;
-  const LibraryPaperRow({super.key, required this.item});
+  final Future<void> Function()? onDelete;
+  const LibraryPaperRow({super.key, required this.item, this.onDelete});
 
   @override
   State<LibraryPaperRow> createState() => _LibraryPaperRowState();
@@ -135,9 +136,13 @@ class _LibraryPaperRowState extends State<LibraryPaperRow> {
             icon: const Icon(Icons.delete_outline),
             tooltip: 'Delete',
             onPressed: () async {
-              vm.clearSelection();
-              vm.togglePaperSelected(p.id);
-              await vm.deleteSelected();
+              if (widget.onDelete != null) {
+                await widget.onDelete!();
+              } else {
+                vm.clearSelection();
+                vm.togglePaperSelected(p.id);
+                await vm.deleteSelected();
+              }
             },
           ),
         ),

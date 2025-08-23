@@ -102,13 +102,25 @@ class LibraryViewModel extends ChangeNotifier {
     final ids = selectedPaperIds.toList();
     if (ids.isEmpty) return;
 
+    // 문자열 → 정수(DB id) 변환. 변환 실패한 것은 전송 제외
+    final dbIds = ids.map((s) => int.tryParse(s)).whereType<int>().toList();
+    final skipped = ids.length - dbIds.length;
+    if (dbIds.isEmpty) {
+      error = '선택한 항목에 서버 DB id가 없어 폴더에 추가할 수 없습니다.';
+      notifyListeners();
+      return;
+    }
+
     isLoading = true;
     notifyListeners();
     try {
-      // 1) 서버 호출
-      await _folderService.addPapersToFolder(folderId: folderId, paperIds: ids);
+      // 1) 서버 호출 (List<int>)
+      await _folderService.addPapersToFolder(
+        folderId: folderId,
+        paperIds: dbIds,
+      );
 
-      // 2) 로컬 매핑/카운트 반영 (중복 추가 방지)
+      // 2) 로컬 매핑/카운트 반영 (원래 문자열 id 기준으로 유지)
       var newlyAdded = 0;
       for (final pid in ids) {
         final set = _paperFolderMap.putIfAbsent(pid, () => <String>{});
@@ -116,8 +128,14 @@ class LibraryViewModel extends ChangeNotifier {
       }
       if (newlyAdded > 0) _bumpFolderCount(folderId, newlyAdded);
 
-      // 3) (선택) 서버 카운트 기준으로 동기화하고 싶으면
+      // 3) 서버 기준으로 동기화
       await refreshFolders();
+
+      // (선택) 변환 실패 안내
+      if (skipped > 0) {
+        // 스낵바/로그 등으로 알려도 좋습니다
+        debugPrint('폴더 추가에서 $skipped개는 DB id가 없어 제외됨');
+      }
     } catch (e) {
       error = e.toString();
     } finally {
@@ -201,6 +219,41 @@ class LibraryViewModel extends ChangeNotifier {
     }
   }
 
+  /// 폴더 안의 특정 paper를 제거
+  Future<void> removePaperFromFolder({
+    required String folderIdStr,
+    required String paperIdStr,
+  }) async {
+    final fid = int.tryParse(folderIdStr);
+    if (fid == null) {
+      error = '잘못된 ID 형식입니다.(folderId)';
+      notifyListeners();
+      return;
+    }
+    final pid = int.tryParse(paperIdStr);
+    isLoading = true;
+    notifyListeners();
+    try {
+      await _folderService.removeItemFromFolder(
+        folderId: fid,
+        paperId: pid, // 정수일 때만 사용
+        paperArxivId: pid == null ? paperIdStr : null, // 정수 변환 실패 → arXiv로 삭제
+      );
+      // 로컬 매핑 및 카운트 반영
+      final set = _paperFolderMap[paperIdStr];
+      if (set != null && set.remove(folderIdStr)) {
+        if (set.isEmpty) _paperFolderMap.remove(paperIdStr);
+        _bumpFolderCount(folderIdStr, -1);
+      }
+      await refreshFolders();
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   // ------------------------------
   // 간단 새로고침 훅 (필요할 때 UI에서 호출)
   // ------------------------------
@@ -252,8 +305,17 @@ class LibraryViewModel extends ChangeNotifier {
     if (uid == null) return;
     try {
       final list = await _folderService.fetchFolders();
-      _userFolders[uid] = list;
-      _folders = list;
+      if (list.isEmpty) {
+        // 최초 사용자: 기본 루트 폴더를 하나 생성
+        await _folderService.createFolder(folderName: 'My Collections');
+        // 다시 조회
+        final list2 = await _folderService.fetchFolders();
+        _userFolders[uid] = list2;
+        _folders = list2;
+      } else {
+        _userFolders[uid] = list;
+        _folders = list;
+      }
       notifyListeners();
     } catch (e) {
       error = e.toString();

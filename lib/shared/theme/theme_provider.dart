@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  ThemeMode _mode = ThemeMode.light;
+  ThemeMode _mode = ThemeMode.light; // 기본: KyungHee Light
   ThemeMode get mode => _mode;
 
   void toggle() {
@@ -10,7 +10,7 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   void setMode(ThemeMode mode) {
-    if (_mode == mode) return; // 동일 모드면 렌더 손실 방지
+    if (_mode == mode) return;
     _mode = mode;
     notifyListeners();
   }

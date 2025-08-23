@@ -1,5 +1,17 @@
 import 'package:intl/intl.dart';
-import 'blog_post_model.dart';
+import 'review_models.dart';
+
+String _normalizeAbstract(String raw) {
+  if (raw.trim().isEmpty) return '';
+  var t = raw.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+  // 앞뒤 공백이 낀 단일 개행을 공백으로
+  t = t.replaceAll(RegExp(r'[ \t]*\n[ \t]*(?!\n)'), ' ');
+  // 3개 이상 연속 개행은 문단 개행 2개로 축약
+  t = t.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+  // 중복 공백/탭 축약
+  t = t.replaceAll(RegExp(r'[ \t]{2,}'), ' ');
+  return t.trim();
+}
 
 class Paper {
   final String id;
@@ -12,7 +24,7 @@ class Paper {
   final DateTime? publishedAt;
   final String translatedAbstract;
   final String blogSummary;
-  final List<BlogPost> relatedBlogs;
+  final List<BlogReviewSummary> relatedBlogs;
   final String? doi;
   final int likeCount;
   final bool? isLiked;
@@ -45,7 +57,7 @@ class Paper {
     DateTime? publishedAt,
     String? translatedAbstract,
     String? blogSummary,
-    List<BlogPost>? relatedBlogs,
+    List<BlogReviewSummary>? relatedBlogs,
     String? doi,
     int? likeCount,
     bool? isLiked,
@@ -61,7 +73,8 @@ class Paper {
       publishedAt: publishedAt ?? this.publishedAt,
       translatedAbstract: translatedAbstract ?? this.translatedAbstract,
       blogSummary: blogSummary ?? this.blogSummary,
-      relatedBlogs: relatedBlogs ?? List<BlogPost>.from(this.relatedBlogs),
+      relatedBlogs:
+          relatedBlogs ?? List<BlogReviewSummary>.from(this.relatedBlogs),
       doi: doi ?? this.doi,
       likeCount: likeCount ?? this.likeCount,
       isLiked: isLiked ?? this.isLiked,
@@ -74,6 +87,14 @@ class Paper {
 
     List<String> _ls(dynamic v) {
       if (v is List) return v.map((e) => e.toString()).toList();
+      if (v is String && v.trim().isNotEmpty) {
+        // "A, B, C" 또는 "A and B" 형태까지 안전 분리
+        return v
+            .split(RegExp(r'\s*,\s*|\s+and\s+'))
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
+      }
       return const <String>[];
     }
 
@@ -84,7 +105,11 @@ class Paper {
     }
 
     final raw =
-        json['published'] ?? json['publishDate'] ?? json['published_at'] ?? '';
+        json['published'] ??
+        json['publish_updated'] ??
+        json['publishDate'] ??
+        json['published_at'] ??
+        '';
     DateTime? publishedAt;
     if (raw is String && raw.isNotEmpty) {
       // 예: "2018-04-09T12:00:08"
@@ -107,17 +132,14 @@ class Paper {
         ? DateFormat('yyyy').format(publishedAt)
         : _s(json['year'], ''); // 백호환
 
-    // reviews → BlogPost 리스트(없으면 빈 리스트)
-    final reviews = (json['reviews'] is List)
+    // reviews → BlogReviewSummary[]
+    final reviewsRaw = (json['reviews'] is List)
         ? (json['reviews'] as List)
         : const [];
-    final blogs = reviews.map((e) {
-      if (e is Map<String, dynamic>) {
-        return BlogPost.fromJson(e);
-      } else {
-        return BlogPost(title: 'Blog', url: '', excerpt: '', imageUrl: null);
-      }
-    }).toList();
+    final related = reviewsRaw
+        .whereType<Map>()
+        .map((e) => BlogReviewSummary.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
 
     return Paper(
       id: _s(json['arxiv_id'] ?? json['id']),
@@ -126,63 +148,12 @@ class Paper {
       year: year,
       fields: _ls(json['categories'] ?? json['tags']),
       pdfUrl: _s(json['link'] ?? json['pdfUrl'] ?? json['pdf_url']),
-      abstractText: _s(json['summary'] ?? json['abstract']),
+      abstractText: _normalizeAbstract(_s(json['summary'] ?? json['abstract'])),
       publishedAt: publishedAt,
       doi: (json['doi'] == null) ? null : json['doi'].toString(),
       likeCount: _i(json['like_count']),
       isLiked: (json['is_liked'] is bool) ? json['is_liked'] as bool : null,
-      relatedBlogs: blogs,
+      relatedBlogs: related,
     );
-  }
-
-  ///샘플 데이터 반환
-  static List<Paper> sampleList() {
-    return [
-      Paper(
-        id: '1706.03762',
-        title: 'Attention Is All You Need',
-        authors: [
-          'Ashish Vaswani',
-          'Noam Shazeer',
-          'Niki Parmar',
-          'Jakob Uszkoreit',
-        ],
-        year: '2017',
-        fields: ['cs.CL', 'cs.LG'],
-        pdfUrl: 'http://arxiv.org/abs/1706.03762v5',
-        abstractText:
-            'The dominant sequence transduction models are based on complex recurrent or convolutional neural networks... We propose a new simple network architecture, the Transformer...',
-        doi: '10.48550/arXiv.1706.03762',
-        likeCount: 1234,
-        isLiked: true,
-      ),
-      Paper(
-        id: '1512.03385',
-        title: 'Deep Residual Learning for Image Recognition',
-        authors: ['Kaiming He', 'Xiangyu Zhang', 'Shaoqing Ren', 'Jian Sun'],
-        year: '2015',
-        fields: ['cs.CV'],
-        pdfUrl: 'http://arxiv.org/abs/1512.03385v1',
-        abstractText:
-            'Deeper neural networks are more difficult to train. We present a residual learning framework to ease the training of networks that are substantially deeper than those used previously...',
-        doi: '10.1109/CVPR.2016.90',
-        likeCount: 987,
-        isLiked: false,
-      ),
-      Paper(
-        id: '1409.1556',
-        title:
-            'Very Deep Convolutional Networks for Large-Scale Image Recognition',
-        authors: ['Karen Simonyan', 'Andrew Zisserman'],
-        year: '2014',
-        fields: ['cs.CV', 'cs.NE'],
-        pdfUrl: 'http://arxiv.org/abs/1409.1556v6',
-        abstractText:
-            'In this work we investigate the effect of the convolutional network depth on its accuracy in the large-scale image recognition setting. Our main contribution is a thorough evaluation of networks of increasing depth...',
-        doi: '10.48550/arXiv.1409.1556',
-        likeCount: 852,
-        isLiked: null, // '좋아요'를 누르지 않은 상태
-      ),
-    ];
   }
 }
