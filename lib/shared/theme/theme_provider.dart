@@ -1,0 +1,17 @@
+import 'package:flutter/material.dart';
+
+class ThemeProvider extends ChangeNotifier {
+  ThemeMode _mode = ThemeMode.light; // 기본: KyungHee Light
+  ThemeMode get mode => _mode;
+
+  void toggle() {
+    _mode = _mode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    notifyListeners();
+  }
+
+  void setMode(ThemeMode mode) {
+    if (_mode == mode) return;
+    _mode = mode;
+    notifyListeners();
+  }
+}
