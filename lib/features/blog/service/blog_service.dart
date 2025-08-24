@@ -36,7 +36,7 @@ class BlogService {
         return '/api/review/search/title';
       case ReviewSearchMode.content:
         // 백엔드가 "content"가 아니라 "cotent"로 되어 있음
-        return '/api/review/search/cotent';
+        return '/api/review/search/content';
       case ReviewSearchMode.user:
         return '/api/review/search/review/user';
     }
@@ -169,7 +169,7 @@ class BlogService {
     int skip = 0,
     int limit = 10,
   }) async {
-    final uri = ApiConfig.uri('/api/review/search/cotent', {
+    final uri = ApiConfig.uri('/api/review/search/content', {
       'keyword': keyword,
       'skip': '$skip',
       'limit': '$limit',
