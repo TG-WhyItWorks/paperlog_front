@@ -17,11 +17,23 @@ class BlogHomePage extends StatelessWidget {
     final args = ModalRoute.of(context)?.settings.arguments;
     String initialKeyword = '';
     bool initialOrderByVotes = false;
-    int initialTabIndex = 0; // 0: 내 포스트, 1: 검색
+    int initialTabIndex = 0; //  0: 홈, 1: 내 포스트, 2: 탐색
 
     if (args is Map) {
       final tab = (args['tab'] ?? '').toString();
-      if (tab == 'search') initialTabIndex = 1;
+      switch (tab) {
+        case 'home':
+          initialTabIndex = 0;
+          break;
+        case 'mine':
+        case 'my':
+          initialTabIndex = 1;
+          break;
+        case 'search':
+        case 'explore':
+          initialTabIndex = 2;
+          break;
+      }
       initialKeyword = (args['keyword'] ?? '').toString();
       initialOrderByVotes = args['orderByVotes'] == true;
     }
@@ -29,7 +41,7 @@ class BlogHomePage extends StatelessWidget {
       // 페이지 전체에서 공유
       create: (_) => BlogFeedViewModel()..loadMine(),
       child: DefaultTabController(
-        length: 2,
+        length: 3,
         initialIndex: initialTabIndex,
         child: Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -54,6 +66,7 @@ class BlogHomePage extends StatelessWidget {
                       TabBar(
                         labelColor: Theme.of(context).colorScheme.onSurface,
                         tabs: const [
+                          Tab(text: '홈'),
                           Tab(text: '내 포스트'),
                           Tab(text: '탐색'),
                         ],
@@ -62,13 +75,24 @@ class BlogHomePage extends StatelessWidget {
                       Expanded(
                         child: TabBarView(
                           children: [
-                            _MyBlogTab(),
-
-                            // 🔽 검색 탭: 인자로 초기 검색 수행
+                            // 홈(추천/랭킹/카테고리/그리드)
                             ChangeNotifierProvider(
                               create: (_) =>
                                   BlogDiscoverViewModel()..load(mockOnly: true),
-                              child: const _DiscoverTab(),
+                              child: const _HomeTab(),
+                            ),
+                            // 내 포스트
+                            _MyBlogTab(),
+                            // 탐색(검색)
+                            ChangeNotifierProvider(
+                              create: (_) => BlogSearchViewModel()
+                                ..setOrderByVotes(initialOrderByVotes)
+                                ..setKeyword(initialKeyword)
+                                ..search(),
+                              child: _ExploreTab(
+                                initialKeyword: initialKeyword,
+                                initialOrderByVotes: initialOrderByVotes,
+                              ),
                             ),
                           ],
                         ),
@@ -200,20 +224,20 @@ class _MyBlogTab extends StatelessWidget {
 }
 
 // 🔽 초기 키워드/정렬을 입력창에도 반영
-class _SearchTab extends StatefulWidget {
+class _ExploreTab extends StatefulWidget {
   final String initialKeyword;
   final bool initialOrderByVotes;
-  const _SearchTab({
+  const _ExploreTab({
     this.initialKeyword = '',
     this.initialOrderByVotes = false,
     super.key,
   });
 
   @override
-  State<_SearchTab> createState() => _SearchTabState();
+  State<_ExploreTab> createState() => _ExploreTabState();
 }
 
-class _SearchTabState extends State<_SearchTab> {
+class _ExploreTabState extends State<_ExploreTab> {
   late final TextEditingController _ctrl;
 
   @override
@@ -250,8 +274,9 @@ class _SearchTabState extends State<_SearchTab> {
             const SizedBox(width: 8),
             DropdownButton<BlogSearchFilter>(
               value: vm.filter,
-              onChanged: (f) =>
-                  context.read<BlogSearchViewModel>().setFilter(f!),
+              onChanged: (f) => context.read<BlogSearchViewModel>()
+                ..setFilter(f!)
+                ..search(),
               items: const [
                 DropdownMenuItem(
                   value: BlogSearchFilter.all,
@@ -333,14 +358,14 @@ class _SearchTabState extends State<_SearchTab> {
   }
 }
 
-class _DiscoverTab extends StatefulWidget {
-  const _DiscoverTab();
+class _HomeTab extends StatefulWidget {
+  const _HomeTab();
 
   @override
-  State<_DiscoverTab> createState() => _DiscoverTabState();
+  State<_HomeTab> createState() => _HomeTabState();
 }
 
-class _DiscoverTabState extends State<_DiscoverTab> {
+class _HomeTabState extends State<_HomeTab> {
   final _page = PageController(viewportFraction: 1.0);
   int _idx = 0;
   final _categories = const [

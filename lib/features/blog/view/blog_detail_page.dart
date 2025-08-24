@@ -351,12 +351,9 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
                           ),
                         ),
 
-                      const SizedBox(height: 24),
-                      Text(
-                        '댓글',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 14),
+                      const Divider(),
+                      const SizedBox(height: 14),
 
                       // 댓글 리스트
                       ...r.comments.map(
