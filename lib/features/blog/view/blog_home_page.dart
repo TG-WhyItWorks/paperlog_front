@@ -17,11 +17,23 @@ class BlogHomePage extends StatelessWidget {
     final args = ModalRoute.of(context)?.settings.arguments;
     String initialKeyword = '';
     bool initialOrderByVotes = false;
-    int initialTabIndex = 0; // 0: 내 포스트, 1: 검색
+    int initialTabIndex = 0; //  0: 홈, 1: 내 포스트, 2: 탐색
 
     if (args is Map) {
       final tab = (args['tab'] ?? '').toString();
-      if (tab == 'search') initialTabIndex = 1;
+      switch (tab) {
+        case 'home':
+          initialTabIndex = 0;
+          break;
+        case 'mine':
+        case 'my':
+          initialTabIndex = 1;
+          break;
+        case 'search':
+        case 'explore':
+          initialTabIndex = 2;
+          break;
+      }
       initialKeyword = (args['keyword'] ?? '').toString();
       initialOrderByVotes = args['orderByVotes'] == true;
     }
@@ -29,7 +41,7 @@ class BlogHomePage extends StatelessWidget {
       // 페이지 전체에서 공유
       create: (_) => BlogFeedViewModel()..loadMine(),
       child: DefaultTabController(
-        length: 2,
+        length: 3,
         initialIndex: initialTabIndex,
         child: Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -54,6 +66,7 @@ class BlogHomePage extends StatelessWidget {
                       TabBar(
                         labelColor: Theme.of(context).colorScheme.onSurface,
                         tabs: const [
+                          Tab(text: '홈'),
                           Tab(text: '내 포스트'),
                           Tab(text: '탐색'),
                         ],
@@ -62,24 +75,24 @@ class BlogHomePage extends StatelessWidget {
                       Expanded(
                         child: TabBarView(
                           children: [
+                            // 홈(추천/랭킹/카테고리/그리드)
+                            ChangeNotifierProvider(
+                              create: (_) =>
+                                  BlogDiscoverViewModel()..load(mockOnly: true),
+                              child: const _HomeTab(),
+                            ),
+                            // 내 포스트
                             _MyBlogTab(),
-
-                            // 🔽 탐색 탭: 추천/랭킹 + 검색바/결과를 함께 사용
-                            MultiProvider(
-                              providers: [
-                                ChangeNotifierProvider(
-                                  create: (_) => BlogSearchViewModel()
-                                    ..setOrderByVotes(initialOrderByVotes)
-                                    ..setKeyword(initialKeyword)
-                                    ..search(), // 초기 키워드 있으면 즉시 검색
-                                ),
-                                ChangeNotifierProvider(
-                                  create: (_) =>
-                                      BlogDiscoverViewModel()
-                                        ..load(mockOnly: true),
-                                ),
-                              ],
-                              child: const _DiscoverTab(), // 내부에서 검색/추천을 스위칭
+                            // 탐색(검색)
+                            ChangeNotifierProvider(
+                              create: (_) => BlogSearchViewModel()
+                                ..setOrderByVotes(initialOrderByVotes)
+                                ..setKeyword(initialKeyword)
+                                ..search(),
+                              child: _ExploreTab(
+                                initialKeyword: initialKeyword,
+                                initialOrderByVotes: initialOrderByVotes,
+                              ),
                             ),
                           ],
                         ),
@@ -211,20 +224,20 @@ class _MyBlogTab extends StatelessWidget {
 }
 
 // 🔽 초기 키워드/정렬을 입력창에도 반영
-class _SearchTab extends StatefulWidget {
+class _ExploreTab extends StatefulWidget {
   final String initialKeyword;
   final bool initialOrderByVotes;
-  const _SearchTab({
+  const _ExploreTab({
     this.initialKeyword = '',
     this.initialOrderByVotes = false,
     super.key,
   });
 
   @override
-  State<_SearchTab> createState() => _SearchTabState();
+  State<_ExploreTab> createState() => _ExploreTabState();
 }
 
-class _SearchTabState extends State<_SearchTab> {
+class _ExploreTabState extends State<_ExploreTab> {
   late final TextEditingController _ctrl;
 
   @override
@@ -261,8 +274,9 @@ class _SearchTabState extends State<_SearchTab> {
             const SizedBox(width: 8),
             DropdownButton<BlogSearchFilter>(
               value: vm.filter,
-              onChanged: (f) =>
-                  context.read<BlogSearchViewModel>().setFilter(f!),
+              onChanged: (f) => context.read<BlogSearchViewModel>()
+                ..setFilter(f!)
+                ..search(),
               items: const [
                 DropdownMenuItem(
                   value: BlogSearchFilter.all,
@@ -344,18 +358,16 @@ class _SearchTabState extends State<_SearchTab> {
   }
 }
 
-class _DiscoverTab extends StatefulWidget {
-  const _DiscoverTab();
+class _HomeTab extends StatefulWidget {
+  const _HomeTab();
 
   @override
-  State<_DiscoverTab> createState() => _DiscoverTabState();
+  State<_HomeTab> createState() => _HomeTabState();
 }
 
-class _DiscoverTabState extends State<_DiscoverTab> {
+class _HomeTabState extends State<_HomeTab> {
   final _page = PageController(viewportFraction: 1.0);
   int _idx = 0;
-  late TextEditingController _searchCtrl;
-  bool _depsInited = false;
   final _categories = const [
     'AI',
     'NLP',
@@ -370,24 +382,12 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   @override
   void dispose() {
     _page.dispose();
-    _searchCtrl.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_depsInited) {
-      final searchVm = context.read<BlogSearchViewModel>();
-      _searchCtrl = TextEditingController(text: searchVm.keyword);
-      _depsInited = true;
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<BlogDiscoverViewModel>();
-    final vmSearch = context.watch<BlogSearchViewModel>();
     if (vm.loading) return const Center(child: CircularProgressIndicator());
     if (vm.error != null) return Center(child: Text('로드 실패: ${vm.error}'));
 
@@ -400,277 +400,192 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // === 검색바 영역 ===
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchCtrl,
-                      decoration: const InputDecoration(
-                        hintText: '아이디/제목/논문제목 검색',
-                        prefixIcon: Icon(Icons.search),
+              // === Hero Carousel ===
+              if (vm.featured.isNotEmpty)
+                Column(
+                  children: [
+                    AspectRatio(
+                      aspectRatio: 16 / 6.5,
+                      child: PageView.builder(
+                        controller: _page,
+                        onPageChanged: (i) => setState(() => _idx = i),
+                        itemCount: vm.featured.length,
+                        itemBuilder: (ctx, i) {
+                          final s = vm.featured[i];
+                          // 썸네일 대충 추출 (Grid와 동일 로직 복붙)
+                          String? _thumbFrom(String text) {
+                            final md = RegExp(r'!\[[^\]]*\]\((.*?)\)');
+                            final m = md.firstMatch(text);
+                            if (m != null) return m.group(1);
+                            final url = RegExp(
+                              r'(https?:\/\/[^\s)]+?\.(?:png|jpe?g|gif|webp))',
+                              caseSensitive: false,
+                            );
+                            final m2 = url.firstMatch(text);
+                            return m2?.group(1);
+                          }
+
+                          final thumb = _thumbFrom(s.content);
+                          return InkWell(
+                            onTap: () => Navigator.of(
+                              context,
+                            ).pushNamed('/blog', arguments: s.id),
+                            child: Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Container(
+                                    width: double.infinity,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHighest,
+                                    child: thumb == null
+                                        ? Icon(
+                                            Icons.image_outlined,
+                                            size: 72,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface
+                                                .withOpacity(.35),
+                                          )
+                                        : Image.network(
+                                            thumb,
+                                            fit: BoxFit.cover,
+                                          ),
+                                  ),
+                                ),
+                                // 그라데이션 + 타이틀
+                                Positioned.fill(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      gradient: LinearGradient(
+                                        begin: Alignment.bottomCenter,
+                                        end: Alignment.topCenter,
+                                        colors: [
+                                          Colors.black.withOpacity(.55),
+                                          Colors.transparent,
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  left: 20,
+                                  right: 20,
+                                  bottom: 18,
+                                  child: Text(
+                                    s.title,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                      onSubmitted: (_) => context.read<BlogSearchViewModel>()
-                        ..setKeyword(_searchCtrl.text.trim())
-                        ..search(),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  DropdownButton<BlogSearchFilter>(
-                    value: vmSearch.filter,
-                    onChanged: (f) => context.read<BlogSearchViewModel>()
-                      ..setFilter(f!)
-                      ..search(),
-                    items: const [
-                      DropdownMenuItem(
-                        value: BlogSearchFilter.all,
-                        child: Text('전체'),
-                      ),
-                      DropdownMenuItem(
-                        value: BlogSearchFilter.title,
-                        child: Text('제목'),
-                      ),
-                      DropdownMenuItem(
-                        value: BlogSearchFilter.user,
-                        child: Text('작성자'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 8),
-                  FilterChip(
-                    label: const Text('좋아요순'),
-                    selected: vmSearch.orderByVotes,
-                    onSelected: (v) => context.read<BlogSearchViewModel>()
-                      ..setOrderByVotes(v)
-                      ..search(),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: () => context.read<BlogSearchViewModel>()
-                      ..setKeyword(_searchCtrl.text.trim())
-                      ..search(),
-                    child: const Text('검색'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (vmSearch.loading) const LinearProgressIndicator(),
-              if (vmSearch.error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text('검색 실패: ${vmSearch.error}'),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(vm.featured.length, (i) {
+                        final active = i == _idx;
+                        return Container(
+                          width: active ? 8 : 6,
+                          height: active ? 8 : 6,
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: active
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.outlineVariant,
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
                 ),
 
-              // === 검색 결과가 있으면 결과 리스트를, 없으면 기존 Discover 섹션을 노출 ===
-              if (vmSearch.results.isNotEmpty) ...[
-                const SizedBox(height: 8),
+              const SizedBox(height: 18),
+
+              // === Ranking List ===
+              if (vm.ranking.isNotEmpty) ...[
                 Text(
-                  '검색 결과',
+                  '인기 글',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const Divider(),
-                ...List.generate(vmSearch.results.length, (i) {
-                  final s = vmSearch.results[i];
-                  return Column(
-                    children: [
-                      ReviewListItem(summary: s),
-                      const Divider(height: 1),
-                    ],
-                  );
+                ...List.generate(vm.ranking.length, (i) {
+                  final s = vm.ranking[i];
+                  return ReviewRankingItem(rank: i + 1, summary: s);
                 }),
-                const SizedBox(height: 16),
-              ] else ...[
-                // === Hero Carousel ===
-                if (vm.featured.isNotEmpty)
-                  Column(
-                    children: [
-                      AspectRatio(
-                        aspectRatio: 16 / 6.5,
-                        child: PageView.builder(
-                          controller: _page,
-                          onPageChanged: (i) => setState(() => _idx = i),
-                          itemCount: vm.featured.length,
-                          itemBuilder: (ctx, i) {
-                            final s = vm.featured[i];
-                            // 썸네일 대충 추출 (Grid와 동일 로직 복붙)
-                            String? _thumbFrom(String text) {
-                              final md = RegExp(r'!\[[^\]]*\]\((.*?)\)');
-                              final m = md.firstMatch(text);
-                              if (m != null) return m.group(1);
-                              final url = RegExp(
-                                r'(https?:\/\/[^\s)]+?\.(?:png|jpe?g|gif|webp))',
-                                caseSensitive: false,
-                              );
-                              final m2 = url.firstMatch(text);
-                              return m2?.group(1);
-                            }
+              ],
 
-                            final thumb = _thumbFrom(s.content);
-                            return InkWell(
-                              onTap: () => Navigator.of(
-                                context,
-                              ).pushNamed('/blog', arguments: s.id),
-                              child: Stack(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: Container(
-                                      width: double.infinity,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.surfaceContainerHighest,
-                                      child: thumb == null
-                                          ? Icon(
-                                              Icons.image_outlined,
-                                              size: 72,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withOpacity(.35),
-                                            )
-                                          : Image.network(
-                                              thumb,
-                                              fit: BoxFit.cover,
-                                            ),
-                                    ),
-                                  ),
-                                  // 그라데이션 + 타이틀
-                                  Positioned.fill(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(16),
-                                        gradient: LinearGradient(
-                                          begin: Alignment.bottomCenter,
-                                          end: Alignment.topCenter,
-                                          colors: [
-                                            Colors.black.withOpacity(.55),
-                                            Colors.transparent,
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    left: 20,
-                                    right: 20,
-                                    bottom: 18,
-                                    child: Text(
-                                      s.title,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge
-                                          ?.copyWith(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(vm.featured.length, (i) {
-                          final active = i == _idx;
-                          return Container(
-                            width: active ? 8 : 6,
-                            height: active ? 8 : 6,
-                            margin: const EdgeInsets.symmetric(horizontal: 3),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: active
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(
-                                      context,
-                                    ).colorScheme.outlineVariant,
-                            ),
-                          );
-                        }),
-                      ),
-                    ],
-                  ),
+              const SizedBox(height: 16),
 
-                const SizedBox(height: 18),
+              // === Category Chips ===
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _categories.map((c) {
+                  final sel = vm.selectedCategory == c;
+                  return FilterChip(
+                    selected: sel,
+                    label: Text(c),
+                    onSelected: (_) =>
+                        context.read<BlogDiscoverViewModel>().pickCategory(c),
+                  );
+                }).toList(),
+              ),
 
-                // === Ranking List ===
-                if (vm.ranking.isNotEmpty) ...[
+              const SizedBox(height: 12),
+
+              // === Grid: 선택 카테고리 or 최신 ===
+              Row(
+                children: [
                   Text(
-                    '인기 글',
+                    vm.selectedCategory == null
+                        ? '최신 글'
+                        : '${vm.selectedCategory} 추천',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const Divider(),
-                  ...List.generate(vm.ranking.length, (i) {
-                    final s = vm.ranking[i];
-                    return ReviewRankingItem(rank: i + 1, summary: s);
-                  }),
                 ],
-
-                const SizedBox(height: 16),
-
-                // === Category Chips ===
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _categories.map((c) {
-                    final sel = vm.selectedCategory == c;
-                    return FilterChip(
-                      selected: sel,
-                      label: Text(c),
-                      onSelected: (_) =>
-                          context.read<BlogDiscoverViewModel>().pickCategory(c),
-                    );
-                  }).toList(),
-                ),
-
-                const SizedBox(height: 12),
-
-                // === Grid: 선택 카테고리 or 최신 ===
-                Row(
-                  children: [
-                    Text(
-                      vm.selectedCategory == null
-                          ? '최신 글'
-                          : '${vm.selectedCategory} 추천',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+              ),
+              const SizedBox(height: 8),
+              LayoutBuilder(
+                builder: (ctx, c) {
+                  final cross = c.maxWidth >= 1024
+                      ? 3
+                      : (c.maxWidth >= 720 ? 2 : 1);
+                  final items = vm.selectedCategory == null
+                      ? vm.latest
+                      : vm.categoryItems;
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: items.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: cross,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 18,
+                      childAspectRatio: 16 / 12,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                LayoutBuilder(
-                  builder: (ctx, c) {
-                    final cross = c.maxWidth >= 1024
-                        ? 3
-                        : (c.maxWidth >= 720 ? 2 : 1);
-                    final items = vm.selectedCategory == null
-                        ? vm.latest
-                        : vm.categoryItems;
-                    return GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: items.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: cross,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 18,
-                        childAspectRatio: 16 / 12,
-                      ),
-                      itemBuilder: (_, i) => ReviewGridCard(summary: items[i]),
-                    );
-                  },
-                ),
-              ],
+                    itemBuilder: (_, i) => ReviewGridCard(summary: items[i]),
+                  );
+                },
+              ),
             ],
           ),
         ),

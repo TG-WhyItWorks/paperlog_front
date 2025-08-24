@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../viewmodel/dashboard_viewmodel.dart';
 import '../widgets/header_widget.dart';
 import '../widgets/sidebar_widget.dart';
-import '../widgets/recommend_paper_card.dart';
 import 'package:provider/provider.dart';
+import '../../paper/widgets/recommended_papers_list.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -61,16 +61,7 @@ class _MainScreenState extends State<MainScreen> {
                         const SizedBox(height: 16),
 
                         //추천 논문 보여주기
-                        Expanded(
-                          child: ListView(
-                            padding: EdgeInsets.zero,
-                            children: vm.recommendPapers
-                                .map(
-                                  (paper) => RecommendPaperCard(paper: paper),
-                                )
-                                .toList(),
-                          ),
-                        ),
+                        RecommendedPapersList(category: 'cs.AI', limit: 3),
                       ],
                     ),
                   ),
